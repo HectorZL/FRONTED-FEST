@@ -1,74 +1,188 @@
-<div class="dashboard-container">
+<div class="min-h-screen bg-gray-50 font-poppins flex">
+  <!-- Sidebar Overlay para móvil -->
+  <div 
+    *ngIf="!isCollapsed" 
+    class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+    (click)="toggleSidebar()">
+  </div>
+
   <!-- Sidebar -->
-  <aside class="sidebar" [class.collapsed]="isCollapsed">
+  <aside 
+    [class]="`
+      fixed lg:relative 
+      ${isCollapsed ? 'w-20' : 'w-80'} 
+      transform transition-all duration-300 ease-in-out
+      h-screen bg-gradient-to-b from-gray-900 to-gray-800 
+      text-white z-50 lg:z-auto
+      ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
+    `">
+    
     <!-- Logo Section -->
-    <div class="sidebar-header">
-      <div class="logo" [class.collapsed]="isCollapsed">
-        <span class="logo-icon">🎭</span>
-        <span class="logo-text" *ngIf="!isCollapsed">CineAdmin</span>
+    <div class="p-6 border-b border-gray-700 flex items-center justify-between">
+      <div class="flex items-center space-x-3 min-w-0">
+        <span class="text-2xl">🎭</span>
+        <span 
+          *ngIf="!isCollapsed" 
+          class="text-xl font-bold truncate transition-opacity duration-300">
+          CineAdmin
+        </span>
       </div>
-      <button class="toggle-btn" (click)="toggleSidebar()">
-        <span class="material-icons">{{ isCollapsed ? 'menu_open' : 'menu' }}</span>
+      
+      <!-- Botón toggle mejorado -->
+      <button 
+        (click)="toggleSidebar()"
+        class="lg:hidden p-2 rounded-lg hover:bg-gray-700 transition-colors"
+        title="Cerrar menú">
+        <span class="material-icons text-white">close</span>
       </button>
     </div>
 
     <!-- Navigation Menu -->
-    <nav class="sidebar-nav">
-      <ul class="nav-list">
-        <li *ngFor="let item of menuItems" class="nav-item">
+    <nav class="flex-1  py-4">
+      <ul class="space-y-2 px-4">
+        <li *ngFor="let item of menuItems">
           <a 
             [routerLink]="item.path" 
             routerLinkActive="active"
-            class="nav-link"
-            [title]="item.description">
-            <span class="nav-icon">{{ item.icon }}</span>
-            <span class="nav-text" *ngIf="!isCollapsed">{{ item.label }}</span>
-            <span class="nav-tooltip" *ngIf="isCollapsed">{{ item.label }}</span>
+            [title]="item.description"
+            class="
+              flex items-center space-x-3 px-4 py-3 rounded-xl
+              transition-all duration-200 group relative
+              hover:bg-gray-700 hover:translate-x-1
+              text-gray-300 hover:text-white
+            "
+            [class.active]="false">
+            
+            <span class="text-xl flex-shrink-0">{{ item.icon }}</span>
+            
+            <span 
+              *ngIf="!isCollapsed"
+              class="font-medium transition-opacity duration-300">
+              {{ item.label }}
+            </span>
+            
+            <!-- Tooltip para modo colapsado -->
+            <div 
+              *ngIf="isCollapsed"
+              class="
+                absolute left-full ml-4 px-3 py-2 
+                bg-gray-900 text-white text-sm rounded-lg
+                opacity-0 invisible group-hover:opacity-100 
+                group-hover:visible transition-all duration-200
+                whitespace-nowrap z-50 shadow-xl
+                before:content-[''] before:absolute before:right-full
+                before:border-8 before:border-transparent 
+                before:border-r-gray-900
+              ">
+              {{ item.label }}
+              <div class="text-xs text-gray-400 mt-1">{{ item.description }}</div>
+            </div>
           </a>
         </li>
       </ul>
     </nav>
 
     <!-- User Profile -->
-    <div class="sidebar-footer" *ngIf="!isCollapsed">
-      <div class="user-profile">
-        <div class="user-avatar">
-          <span class="avatar-icon">👤</span>
+    <div *ngIf="!isCollapsed" class="mt-10 p-4 border-t border-gray-700">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+          <span class="text-lg">👤</span>
         </div>
-        <div class="user-info">
-          <span class="user-name">Administrador</span>
-          <span class="user-role">Super Admin</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-semibold text-sm truncate">Administrador</p>
+          <p class="text-xs text-gray-400 truncate">Super Admin</p>
         </div>
       </div>
+    </div>
+
+    <!-- Botón toggle para desktop -->
+    <div class=" mt-auto hidden lg:block p-4 border-t border-gray-700">
+      <button 
+        (click)="toggleSidebar()"
+        class="
+          w-full flex items-center justify-center space-x-2 
+          px-4 py-2 rounded-lg bg-gray-700 
+          hover:bg-gray-600 transition-colors
+          text-sm font-medium
+        "
+        [title]="isCollapsed ? 'Expandir menú' : 'Contraer menú'">
+        <span class="material-icons text-lg">
+          {{ isCollapsed ? 'chevron_right' : 'chevron_left' }}
+        </span>
+        <span *ngIf="!isCollapsed"></span>
+      </button>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="main-content">
+  <main 
+    [class]="`
+      flex-1 transition-all duration-300 ease-in-out
+      ${isCollapsed ? 'lg:ml-20' : 'lg:ml-80'}
+    `">
+    
     <!-- Header -->
-    <header class="content-header">
-      <div class="header-left">
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Sistema de Gestión Cinematográfica</p>
-      </div>
-      <div class="header-right">
-        <div class="header-actions">
-          <button class="action-btn" title="Notificaciones">
-            <span class="material-icons">notifications</span>
-            <span class="notification-badge">3</span>
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="px-6 py-4">
+        <div class="flex items-center justify-between">
+          <!-- Botón hamburguesa para móvil -->
+          <button 
+            (click)="toggleSidebar()"
+            class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Abrir menú">
+            <span class="material-icons text-gray-600">menu</span>
           </button>
-          <button class="action-btn" title="Configuración">
-            <span class="material-icons">settings</span>
-          </button>
-          <button class="action-btn profile-btn" title="Perfil">
-            <span class="material-icons">account_circle</span>
-          </button>
+
+          <div class="flex-1 lg:flex-none">
+            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p class="text-gray-600 mt-1">Sistema de Gestión Cinematográfica</p>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <!-- Notifications -->
+            <button 
+              class="
+                relative p-2 rounded-lg hover:bg-gray-100 
+                transition-colors text-gray-600
+              "
+              title="Notificaciones">
+              <span class="material-icons">notifications</span>
+              <span class="
+                absolute -top-1 -right-1 w-5 h-5 
+                bg-red-500 text-white text-xs 
+                rounded-full flex items-center justify-center
+                font-semibold
+              ">3</span>
+            </button>
+
+            <!-- Settings -->
+            <button 
+              class="
+                p-2 rounded-lg hover:bg-gray-100 
+                transition-colors text-gray-600
+              "
+              title="Configuración">
+              <span class="material-icons">settings</span>
+            </button>
+
+            <!-- User Profile -->
+            <button 
+              class="
+                flex items-center space-x-2 p-2 
+                rounded-lg hover:bg-gray-100 
+                transition-colors text-gray-600
+              "
+              title="Perfil">
+              <span class="material-icons">account_circle</span>
+              <span class="hidden sm:block font-medium">Admin</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
     <!-- Router Outlet -->
-    <div class="content-area">
+    <div class="p-6">
       <router-outlet></router-outlet>
     </div>
   </main>
