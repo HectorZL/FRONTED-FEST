@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TicketModalComponent } from '../boletomodal/boletomodal';
 
-interface Ticket {
+export interface Ticket {
   id: number;
   pelicula: string;
   fecha: string;
@@ -15,11 +16,23 @@ interface Ticket {
 @Component({
   selector: 'app-boletos',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TicketModalComponent],
   templateUrl: './boletos.html',
   styleUrls: ['./boletos.scss']
 })
 export class Boletos {
+  showModal = false;
+
+  // Toggle modal visibility
+  toggleModal() {
+    this.showModal = !this.showModal;
+  }
+
+  // Handle new ticket added from modal
+  onTicketAdded(newTicket: Ticket) {
+    this.tickets.unshift(newTicket);
+    this.showModal = false;
+  }
   // Add these computed properties
   get activeTicketsCount(): number {
     return this.tickets.filter(t => t.estado === 'activo').length;
