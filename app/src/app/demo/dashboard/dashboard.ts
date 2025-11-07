@@ -26,6 +26,12 @@ export class Dashboard implements OnInit, OnDestroy {
       description: 'Gestionar usuarios del sistema',
     },
     {
+      path: '/dashboard/renta',
+      icon: '🏢',
+      label: 'Renta de Salas',
+      description: 'Gestionar renta de salas de cine',
+    },
+    {
       path: '/dashboard/peliculas',
       icon: '🎬',
       label: 'Películas',
