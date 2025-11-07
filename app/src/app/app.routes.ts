@@ -1,11 +1,20 @@
 import { Routes } from '@angular/router';
+import { LoginComponent } from './demo/login/login';
 import { Dashboard } from './demo/dashboard/dashboard';
-import { Peliculas } from './demo/dashboard/components/peliculas/peliculas';
 
 export const routes: Routes = [
+  { 
+    path: 'login', 
+    component: LoginComponent 
+  },
+  { 
+    path: '', 
+    redirectTo: '/login', 
+    pathMatch: 'full' 
+  },
   {
     path: 'dashboard',
-    component: Dashboard,
+    loadComponent: () => import('./demo/dashboard/dashboard').then(m => m.Dashboard),
     children: [
       {
         path: 'renta',
@@ -47,6 +56,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./demo/dashboard/components/rol/rol').then((m) => m.RoleFormComponent),
       },
+      {
+        path: '',
+        redirectTo: 'peliculas',
+        pathMatch: 'full'
+      }
     ],
   },
+  {
+    path: '**',
+    redirectTo: '/login'
+  }
 ];

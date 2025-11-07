@@ -1,0 +1,23 @@
+/* Estilos adicionales personalizados si se necesitan */
+:host {
+  display: block;
+}
+
+/* Mejoras de accesibilidad */
+input:focus {
+  outline: none;
+}
+
+/* Animaciones suaves para todos los elementos */
+* {
+  transition-property: color, background-color, border-color, transform, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejora el contraste para accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none;
+  }
+}
