@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Modal } from '../../util/modal/modal';
 
 interface Pelicula {
   id: number;
@@ -8,7 +9,7 @@ interface Pelicula {
   sinopsis: string;
   duracion: number;
   clasificacion: string;
-  genero: string;
+  genero: string[];
   imagenUrl: string;
   estado: boolean;
 }
@@ -16,20 +17,13 @@ interface Pelicula {
 @Component({
   selector: 'app-peliculas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Modal],
   templateUrl: './peliculas.html',
   styleUrls: ['./peliculas.scss']
 })
-export class Peliculas {
-  pelicula: Partial<Pelicula> = {
-    titulo: '',
-    sinopsis: '',
-    duracion: 0,
-    clasificacion: '',
-    genero: '',
-    imagenUrl: ''
-  };
 
+export class Peliculas{
+  mostrarModal = false;
   peliculas: Pelicula[] = [
     {
       id: 1,
@@ -37,8 +31,8 @@ export class Peliculas {
       sinopsis: 'Un ladrón que roba secretos corporativos mediante el uso de tecnología de sueños compartidos.',
       duracion: 148,
       clasificacion: 'PG-13',
-      genero: 'Ciencia Ficción',
-      imagenUrl: 'assets/origen.jpg',
+      genero: ['Ciencia Ficción', 'Acción'],
+      imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
       estado: true
     },
     {
@@ -47,68 +41,39 @@ export class Peliculas {
       sinopsis: 'La historia de una familia de la mafia italiana y su lucha por mantener el poder en el crimen organizado.',
       duracion: 175,
       clasificacion: 'R',
-      genero: 'Drama',
-      imagenUrl: 'assets/padrino.jpg',
+      genero: ['Drama', 'Crimen'],
+      imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
       estado: true
+    },
+    {
+      id: 3,
+      titulo: 'Interestelar',
+      sinopsis: 'Un grupo de exploradores viaja a través de un agujero de gusano en el espacio en un intento por asegurar la supervivencia de la humanidad.',
+      duracion: 169,
+      clasificacion: 'PG-13',
+      genero: ['Ciencia Ficción', 'Aventura', 'Drama'],
+      imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
+      estado: false
     }
   ];
 
-  clasificaciones: string[] = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
-  generos: string[] = ['Acción', 'Aventura', 'Comedia', 'Drama', 'Ciencia Ficción', 'Terror', 'Romance', 'Animación'];
-  
   filtroBusqueda: string = '';
-  archivoSeleccionado: File | null = null;
-  vistaPreviaImagen: string | ArrayBuffer | null = null;
 
-  agregarPelicula() {
-    if (this.validarFormulario()) {
-      const nuevaPelicula: Pelicula = {
-        id: this.peliculas.length + 1,
-        titulo: this.pelicula.titulo!,
-        sinopsis: this.pelicula.sinopsis!,
-        duracion: this.pelicula.duracion!,
-        clasificacion: this.pelicula.clasificacion!,
-        genero: this.pelicula.genero!,
-        imagenUrl: this.vistaPreviaImagen as string || 'assets/default-movie.jpg',
-        estado: true
-      };
-
-      this.peliculas.push(nuevaPelicula);
-      this.limpiarFormulario();
-    }
+  abrirModal() {
+    this.mostrarModal = true;
   }
 
-  validarFormulario(): boolean {
-    return !!(this.pelicula.titulo && 
-              this.pelicula.sinopsis && 
-              this.pelicula.duracion && 
-              this.pelicula.clasificacion && 
-              this.pelicula.genero);
+  cerrarModal() {
+    this.mostrarModal = false;
   }
 
-  limpiarFormulario() {
-    this.pelicula = {
-      titulo: '',
-      sinopsis: '',
-      duracion: 0,
-      clasificacion: '',
-      genero: '',
-      imagenUrl: ''
+  onPeliculaGuardada(nuevaPelicula: Omit<Pelicula, 'id'>) {
+    const pelicula: Pelicula = {
+      ...nuevaPelicula,
+      id: this.peliculas.length + 1
     };
-    this.archivoSeleccionado = null;
-    this.vistaPreviaImagen = null;
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.archivoSeleccionado = file;
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.vistaPreviaImagen = reader.result;
-      };
-      reader.readAsDataURL(file);
-    }
+    this.peliculas.push(pelicula);
+    this.cerrarModal();
   }
 
   toggleEstado(pelicula: Pelicula) {
@@ -125,7 +90,7 @@ export class Peliculas {
     }
     return this.peliculas.filter(pelicula =>
       pelicula.titulo.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) ||
-      pelicula.genero.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) ||
+      pelicula.genero.some(g => g.toLowerCase().includes(this.filtroBusqueda.toLowerCase())) ||
       pelicula.clasificacion.toLowerCase().includes(this.filtroBusqueda.toLowerCase())
     );
   }
