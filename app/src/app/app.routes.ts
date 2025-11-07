@@ -13,6 +13,11 @@ export const routes: Routes = [
           import('./demo/dashboard/components/peliculas/peliculas').then((m) => m.Peliculas),
       },
       {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./demo/dashboard/components/usuarios/usuarios').then((m) => m.UserManagementComponent),
+      },
+      {
         path: 'boletos',
         loadComponent: () =>
           import('./demo/dashboard/components/boletos/boletos').then((m) => m.Boletos),
