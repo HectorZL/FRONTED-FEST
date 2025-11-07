@@ -1,0 +1,507 @@
+<header class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen">
+  <!-- Header Superior -->
+  <div class="px-6 py-4 flex justify-between items-center border-b border-cyan-500/30 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50">
+    <div class="flex items-center space-x-8">
+      <!-- Logo ULEAMCINE -->
+      <div class="flex items-center space-x-3 group cursor-pointer" (click)="volverACartelera()">
+        <div class="w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg shadow-cyan-500/25">
+          <span class="text-white font-black text-xl">U</span>
+        </div>
+        <div>
+          <span class="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            ULEAMCINE
+          </span>
+          <p class="text-xs text-cyan-300 opacity-80">Universidad Laica Eloy Alfaro de Manabí</p>
+        </div>
+      </div>
+
+      <!-- Mostrar filtros solo en cartelera -->
+      <div *ngIf="pasoActual === 'cartelera'" class="flex items-center space-x-8">
+        <!-- Filtro de Género -->
+        <div class="relative group">
+          <select
+            [(ngModel)]="filtroGenero"
+            class="bg-slate-800/90 text-white p-3 rounded-xl text-sm cursor-pointer border-2 border-cyan-500/40 hover:border-cyan-400 focus:border-cyan-300 transition-all duration-300 backdrop-blur-xl pr-10 appearance-none"
+          >
+            <option value="">Todos los Géneros</option>
+            <option *ngFor="let genero of generosUnicos" [value]="genero">{{ genero }}</option>
+          </select>
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-400 pointer-events-none">
+            ▼
+          </div>
+        </div>
+
+        <!-- Filtro de Sala -->
+        <div class="relative group">
+          <select
+            [(ngModel)]="filtroSala"
+            class="bg-slate-800/90 text-white p-3 rounded-xl text-sm cursor-pointer border-2 border-cyan-500/40 hover:border-cyan-400 focus:border-cyan-300 transition-all duration-300 backdrop-blur-xl pr-10 appearance-none"
+          >
+            <option value="">Todas las Salas</option>
+            <option *ngFor="let sala of salasUnicas" [value]="sala">{{ sala }}</option>
+          </select>
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-400 pointer-events-none">
+            ▼
+          </div>
+        </div>
+
+        <!-- Barra de Búsqueda -->
+        <div class="relative group">
+          <input
+            type="text"
+            [(ngModel)]="filtroBusqueda"
+            placeholder="Buscar películas..."
+            class="bg-slate-800/90 text-white p-3 pl-12 rounded-xl text-sm border-2 border-cyan-500/40 hover:border-cyan-400 focus:border-cyan-300 transition-all duration-300 backdrop-blur-xl w-80 focus:w-96 group-hover:w-96"
+          >
+          <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-cyan-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breadcrumb para otros pasos -->
+      <div *ngIf="pasoActual !== 'cartelera' && funcionSeleccionada" class="flex items-center space-x-4 text-cyan-300">
+        <span class="text-lg font-semibold">
+          {{ pasoActual === 'asientos' ? 'Selección de Asientos' : 'Confirmación de Reserva' }}
+        </span>
+        <span class="text-sm opacity-70">
+          {{ funcionSeleccionada.pelicula.titulo }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Información de usuario (ya logeado) -->
+    <div class="flex items-center space-x-4">
+      <div class="text-right">
+        <p class="text-sm font-semibold text-cyan-300">Bienvenido</p>
+        <p class="text-xs text-cyan-100/80">Usuario ULEAM</p>
+      </div>
+      <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+        <span class="text-white font-bold text-sm">U</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARRUSEL (solo mostrar en cartelera) -->
+  <div *ngIf="pasoActual === 'cartelera'" class="relative h-[70vh] min-h-[600px] overflow-hidden">
+    <div
+        *ngFor="let banner of banners; let i = index"
+        class="absolute inset-0 transition-opacity duration-700 ease-in-out"
+        [ngClass]="{
+            'opacity-100 z-10': i === currentBannerIndex,
+            'opacity-0 z-0': i !== currentBannerIndex
+        }"
+    >
+        <div class="relative w-full h-full">
+            <img
+                [src]="banner.imageUrl"
+                class="w-full h-full object-cover"
+                [alt]="banner.titulo"
+                loading="eager"
+            />
+            <div class="absolute inset-0 bg-black/30"></div>
+        </div>
+
+        <div class="absolute inset-0 flex items-center">
+             <div [ngClass]="banner.bgColor" class="w-full h-full flex items-center p-8 lg:p-16">
+                 <div class="max-w-2xl text-white ml-4 lg:ml-16">
+                    <h2 class="text-4xl lg:text-6xl font-black mb-4 drop-shadow-2xl leading-tight">
+                        {{ banner.titulo }}
+                    </h2>
+                    <p class="text-xl lg:text-2xl font-semibold mb-6 lg:mb-8 text-cyan-300 drop-shadow-lg">
+                        {{ banner.subtitulo }}
+                    </p>
+                    <button
+                        (click)="reservarFuncion(obtenerFuncionesDisponibles(banner.peliculaId)[0])"
+                        class="px-6 lg:px-10 py-3 lg:py-5 bg-gradient-to-r from-rose-600 to-pink-700 font-bold lg:font-black rounded-xl lg:rounded-2xl hover:from-rose-500 hover:to-pink-600 transform hover:scale-105 transition-all duration-300 shadow-xl lg:shadow-2xl hover:shadow-rose-500/50 text-base lg:text-lg relative overflow-hidden group"
+                    >
+                        <span class="relative z-10">RESERVAR AHORA</span>
+                        <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button
+        (click)="prevBanner()"
+        class="absolute left-4 lg:left-6 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 lg:p-4 rounded-xl lg:rounded-2xl transition-all duration-300 hover:scale-110 shadow-2xl z-20 group"
+        aria-label="Banner anterior"
+    >
+        <svg class="w-5 h-5 lg:w-6 lg:h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+    </button>
+
+    <button
+        (click)="nextBanner()"
+        class="absolute right-4 lg:right-6 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 lg:p-4 rounded-xl lg:rounded-2xl transition-all duration-300 hover:scale-110 shadow-2xl z-20 group"
+        aria-label="Banner siguiente"
+    >
+        <svg class="w-5 h-5 lg:w-6 lg:h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+    </button>
+
+    <!-- Indicadores del Carrusel -->
+    <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-20">
+      <button
+        *ngFor="let banner of banners; let i = index"
+        (click)="goToBanner(i)"
+        class="w-4 h-4 rounded-full transition-all duration-300 transform hover:scale-125"
+        [class]="i === currentBannerIndex ? 'bg-cyan-400 shadow-lg shadow-cyan-400/50' : 'bg-white/50 hover:bg-white/70'"
+      ></button>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL POR PASOS -->
+
+  <!-- PASO 1: CARTELERA -->
+  <section *ngIf="pasoActual === 'cartelera'" class="px-8 py-16 bg-gradient-to-b from-slate-900/50 to-slate-900">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-5xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-6">
+          🎬 CARTELERA ULEAM
+        </h2>
+        <p class="text-xl text-cyan-100/80 mb-2">Reserva tu película favorita en nuestras salas</p>
+        <div class="w-24 h-1 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mx-auto mt-4"></div>
+      </div>
+
+      <!-- Contador de resultados -->
+      <div class="mb-8 text-center">
+        <p class="text-cyan-300 font-semibold">
+          Mostrando <span class="text-white text-xl">{{ peliculasUnicas.length }}</span>
+          películas con <span class="text-white text-xl">{{ funcionesFuturas.length }}</span> funciones disponibles
+        </p>
+      </div>
+
+      <!-- Lista de Películas -->
+      <div class="space-y-12">
+        <div *ngFor="let pelicula of peliculasUnicas" class="movie-card">
+          <!-- Tarjeta de Película -->
+          <div class="bg-slate-800/40 rounded-3xl overflow-hidden border-2 border-cyan-500/20 hover:border-cyan-400/60 transition-all duration-500 backdrop-blur-xl hover:shadow-2xl hover:shadow-cyan-500/20">
+            <!-- Header de la Película -->
+            <div class="flex flex-col lg:flex-row">
+              <!-- Poster -->
+              <div class="lg:w-1/4 relative">
+                <img
+                  [src]="pelicula.pelicula.posterUrl"
+                  [alt]="pelicula.pelicula.titulo"
+                  class="w-full h-80 lg:h-full object-cover"
+                />
+                <div class="absolute top-4 left-4 flex flex-wrap gap-2">
+                  <span class="bg-cyan-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    {{ pelicula.pelicula.clasificacion }}
+                  </span>
+                  <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    {{ formatearDuracion(pelicula.pelicula.duracionMin) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Información de la Película -->
+              <div class="lg:w-3/4 p-6 lg:p-8">
+                <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-4">
+                  <div>
+                    <h3 class="text-2xl lg:text-3xl font-black text-white mb-2">
+                      {{ pelicula.pelicula.titulo }}
+                    </h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                      <span *ngFor="let genero of pelicula.pelicula.generos"
+                            class="bg-slate-700/80 text-cyan-100 px-3 py-1 rounded-full text-sm">
+                        {{ genero }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="lg:text-right">
+                    <div class="text-2xl font-black text-green-400 mb-2">
+                      GRATIS
+                    </div>
+                    <div class="text-sm text-cyan-300">
+                      Para la comunidad ULEAM
+                    </div>
+                  </div>
+                </div>
+
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                  {{ pelicula.pelicula.sinopsis }}
+                </p>
+
+                <!-- Funciones Disponibles -->
+                <div class="mt-6">
+                  <h4 class="text-lg font-bold text-cyan-300 mb-4">🎭 Funciones Disponibles:</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div *ngFor="let funcion of getFuncionesPorPelicula(pelicula.pelicula.id)"
+                         class="bg-slate-700/50 rounded-xl p-4 border border-cyan-500/30 hover:border-cyan-400/60 transition-all duration-300 group">
+                      <div class="flex justify-between items-start mb-3">
+                        <div>
+                          <div class="font-bold text-white group-hover:text-cyan-300 transition-colors">
+                            {{ funcion.sala.nombre }}
+                          </div>
+                          <div class="text-sm text-cyan-200/80">
+                            {{ funcion.sala.tipo }} • {{ funcion.sala.capacidad }} asientos
+                          </div>
+                        </div>
+                        <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs font-bold">
+                          {{ funcion.estado }}
+                        </span>
+                      </div>
+
+                      <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                          <span class="text-gray-300">Fecha:</span>
+                          <span class="text-white font-semibold">{{ formatearFecha(funcion.inicio) }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                          <span class="text-gray-300">Hora:</span>
+                          <span class="text-white font-semibold">{{ formatearHora(funcion.inicio) }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                          <span class="text-gray-300">Duración:</span>
+                          <span class="text-white font-semibold">{{ formatearDuracion(funcion.pelicula.duracionMin) }}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        (click)="seleccionarFuncion(funcion)"
+                        class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-400 hover:to-emerald-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/25 relative overflow-hidden group"
+                      >
+                        <span class="relative z-10">
+                          SELECCIONAR ASIENTOS
+                        </span>
+                        <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje si no hay resultados -->
+      <div *ngIf="peliculasUnicas.length === 0" class="text-center py-20">
+        <div class="text-8xl mb-6 opacity-60">🎭</div>
+        <h3 class="text-3xl font-black text-cyan-100 mb-4">No se encontraron películas</h3>
+        <p class="text-cyan-200/70 text-lg mb-6">Intenta con otros filtros de búsqueda</p>
+        <button
+          (click)="filtroGenero = ''; filtroBusqueda = ''; filtroSala = ''"
+          class="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black rounded-xl hover:from-cyan-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-300"
+        >
+          MOSTRAR TODAS LAS PELÍCULAS
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASO 2: SELECCIÓN DE ASIENTOS -->
+  <section *ngIf="pasoActual === 'asientos' && funcionSeleccionada" class="px-8 py-16 bg-gradient-to-b from-slate-900/50 to-slate-900">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <button (click)="volverACartelera()" class="text-cyan-400 hover:text-cyan-300 mb-4 flex items-center justify-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Volver a Cartelera
+        </button>
+        <h2 class="text-4xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-4">
+          🎭 Selecciona tus Asientos
+        </h2>
+        <div class="bg-slate-800/50 rounded-2xl p-6 mb-6">
+          <h3 class="text-2xl font-bold text-white mb-2">{{ funcionSeleccionada.pelicula.titulo }}</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="text-cyan-300">Sala:</span>
+              <span class="text-white ml-2">{{ funcionSeleccionada.sala.nombre }}</span>
+            </div>
+            <div>
+              <span class="text-cyan-300">Fecha:</span>
+              <span class="text-white ml-2">{{ formatearFecha(funcionSeleccionada.inicio) }}</span>
+            </div>
+            <div>
+              <span class="text-cyan-300">Hora:</span>
+              <span class="text-white ml-2">{{ formatearHora(funcionSeleccionada.inicio) }}</span>
+            </div>
+            <div>
+              <span class="text-cyan-300">Duración:</span>
+              <span class="text-white ml-2">{{ formatearDuracion(funcionSeleccionada.pelicula.duracionMin) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa de Asientos -->
+      <div class="bg-slate-800 rounded-2xl p-8 mb-6">
+        <!-- Pantalla -->
+        <div class="text-center mb-8">
+          <div class="w-64 h-3 bg-cyan-500 mx-auto mb-2 rounded-full shadow-lg shadow-cyan-500/25"></div>
+          <span class="text-cyan-300 font-semibold">PANTALLA</span>
+        </div>
+
+        <!-- Asientos -->
+        <div class="flex flex-col items-center gap-3">
+          <div *ngFor="let fila of asientosAgrupados" class="flex gap-2">
+            <div class="w-8 text-cyan-300 font-bold self-center text-center">{{ fila[0].fila }}</div>
+            <button
+              *ngFor="let asiento of fila"
+              (click)="seleccionarAsiento(asiento)"
+              [disabled]="asiento.estado_asiento !== 'disponible'"
+              [class]="getClaseAsiento(asiento)"
+            >
+              {{ asiento.numero }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leyenda -->
+      <div class="flex gap-6 justify-center text-sm mb-8">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 bg-green-500 rounded"></div>
+          <span>Disponible</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 bg-cyan-500 rounded"></div>
+          <span>Seleccionado</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 bg-red-500 rounded"></div>
+          <span>Ocupado</span>
+        </div>
+      </div>
+
+      <!-- Resumen y Confirmación -->
+      <div *ngIf="asientosSeleccionados.length > 0" class="bg-slate-800/50 rounded-2xl p-6">
+        <h4 class="text-xl font-bold text-cyan-300 mb-4">Resumen de Selección</h4>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <span *ngFor="let asiento of asientosSeleccionados"
+                class="bg-cyan-600 text-white px-4 py-2 rounded-full font-bold">
+            {{ asiento.fila }}{{ asiento.numero }}
+          </span>
+        </div>
+        <div class="text-center">
+          <p class="text-lg text-white mb-4">
+            Total de asientos: <span class="text-cyan-300 font-bold">{{ asientosSeleccionados.length }}</span>
+          </p>
+          <button
+            (click)="confirmarAsientos()"
+            class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/25 text-lg"
+          >
+            CONFIRMAR {{ asientosSeleccionados.length }} ASIENTO(S)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASO 3: CONFIRMACIÓN -->
+  <section *ngIf="pasoActual === 'confirmacion' && funcionSeleccionada" class="px-8 py-16 bg-gradient-to-b from-slate-900/50 to-slate-900">
+    <div class="max-w-2xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <button (click)="volverAAsientos()" class="text-cyan-400 hover:text-cyan-300 mb-4 flex items-center justify-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Volver a Asientos
+        </button>
+        <h2 class="text-4xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-4">
+          ✅ Confirmar Reserva
+        </h2>
+      </div>
+
+      <!-- Detalles de la Reserva -->
+      <div class="bg-slate-800/50 rounded-2xl p-8 mb-6">
+        <h3 class="text-2xl font-bold text-white mb-6 text-center">{{ funcionSeleccionada.pelicula.titulo }}</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="space-y-4">
+            <div>
+              <label class="text-cyan-300 font-semibold">Sala</label>
+              <p class="text-white text-lg">{{ funcionSeleccionada.sala.nombre }}</p>
+            </div>
+            <div>
+              <label class="text-cyan-300 font-semibold">Fecha y Hora</label>
+              <p class="text-white text-lg">{{ formatearFecha(funcionSeleccionada.inicio) }} a las {{ formatearHora(funcionSeleccionada.inicio) }}</p>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="text-cyan-300 font-semibold">Asientos Seleccionados</label>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <span *ngFor="let asiento of asientosSeleccionados"
+                      class="bg-cyan-600 text-white px-3 py-1 rounded-full font-bold">
+                  {{ asiento.fila }}{{ asiento.numero }}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label class="text-cyan-300 font-semibold">Duración</label>
+              <p class="text-white text-lg">{{ formatearDuracion(funcionSeleccionada.pelicula.duracionMin) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Costo -->
+        <div class="bg-slate-700/50 rounded-xl p-4 text-center">
+          <div class="flex justify-center items-center gap-4">
+            <span class="text-cyan-300 text-xl font-semibold">Costo Total:</span>
+            <span class="text-3xl font-black text-green-400">GRATIS</span>
+          </div>
+          <p class="text-cyan-200/70 text-sm mt-2">* Reserva gratuita para la comunidad ULEAM</p>
+        </div>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex gap-4">
+        <button
+          (click)="volverAAsientos()"
+          class="flex-1 py-4 bg-slate-700 text-white font-bold rounded-xl hover:bg-slate-600 transition-all duration-300 text-lg"
+        >
+          Modificar Asientos
+        </button>
+        <button
+          (click)="finalizarReserva()"
+          class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/25 text-lg"
+        >
+          🎉 CONFIRMAR RESERVA
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mensaje de error si no hay función seleccionada -->
+  <section *ngIf="(pasoActual === 'asientos' || pasoActual === 'confirmacion') && !funcionSeleccionada" class="px-8 py-16 bg-gradient-to-b from-slate-900/50 to-slate-900">
+    <div class="max-w-2xl mx-auto text-center">
+      <div class="text-6xl mb-6">❌</div>
+      <h2 class="text-3xl font-black text-cyan-100 mb-4">Error en la reserva</h2>
+      <p class="text-cyan-200/70 text-lg mb-6">No se encontró información de la función seleccionada.</p>
+      <button
+        (click)="volverACartelera()"
+        class="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black rounded-xl hover:from-cyan-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-300"
+      >
+        VOLVER A CARTELERA
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900/90 border-t border-cyan-500/30 py-12 px-8 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto text-center">
+      <div class="flex justify-center items-center space-x-4 mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/25">
+          <span class="text-white font-black text-xl">U</span>
+        </div>
+        <span class="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          ULEAMCINE
+        </span>
+      </div>
+      <p class="text-cyan-200/80 text-lg mb-4">Sistema de Reservas de Cine - Universidad Laica Eloy Alfaro de Manabí</p>
+      <p class="text-cyan-300/60 text-sm">© 2024 ULEAM. Todos los derechos reservados. | Manta, Ecuador</p>
+    </div>
+  </footer>
+</header>

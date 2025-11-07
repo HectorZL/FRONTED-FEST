@@ -64,6 +64,11 @@ export const routes: Routes = [
     ],
   },
   {
+    path: "clientes",
+    loadComponent: () =>
+      import('./demo/client/client').then((m) => m.Client),
+  },
+  {
     path: '**',
     redirectTo: '/login'
   }
