@@ -1,0 +1,75 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isCollapsed">
+    <!-- Logo Section -->
+    <div class="sidebar-header">
+      <div class="logo" [class.collapsed]="isCollapsed">
+        <span class="logo-icon">🎭</span>
+        <span class="logo-text" *ngIf="!isCollapsed">CineAdmin</span>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <span class="material-icons">{{ isCollapsed ? 'menu_open' : 'menu' }}</span>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li *ngFor="let item of menuItems" class="nav-item">
+          <a 
+            [routerLink]="item.path" 
+            routerLinkActive="active"
+            class="nav-link"
+            [title]="item.description">
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-text" *ngIf="!isCollapsed">{{ item.label }}</span>
+            <span class="nav-tooltip" *ngIf="isCollapsed">{{ item.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- User Profile -->
+    <div class="sidebar-footer" *ngIf="!isCollapsed">
+      <div class="user-profile">
+        <div class="user-avatar">
+          <span class="avatar-icon">👤</span>
+        </div>
+        <div class="user-info">
+          <span class="user-name">Administrador</span>
+          <span class="user-role">Super Admin</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="content-header">
+      <div class="header-left">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Sistema de Gestión Cinematográfica</p>
+      </div>
+      <div class="header-right">
+        <div class="header-actions">
+          <button class="action-btn" title="Notificaciones">
+            <span class="material-icons">notifications</span>
+            <span class="notification-badge">3</span>
+          </button>
+          <button class="action-btn" title="Configuración">
+            <span class="material-icons">settings</span>
+          </button>
+          <button class="action-btn profile-btn" title="Perfil">
+            <span class="material-icons">account_circle</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Router Outlet -->
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

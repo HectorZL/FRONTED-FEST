@@ -1,0 +1,212 @@
+<div class="peliculas-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <h1 class="page-title">Gestión de Películas</h1>
+    <p class="page-subtitle">Administra el catálogo de películas del sistema</p>
+  </div>
+
+  <!-- Add Movie Form -->
+  <div class="form-section">
+    <div class="form-card">
+      <h2 class="form-title">
+        <span class="material-icons">add_circle</span>
+        Agregar nueva película
+      </h2>
+
+      <div class="form-content">
+        <!-- Left Column - Basic Info -->
+        <div class="form-column">
+          <div class="form-group">
+            <label class="form-label">Título de la película</label>
+            <input 
+              type="text" 
+              class="form-input"
+              [(ngModel)]="pelicula.titulo"
+              placeholder="Ej: El Padrino">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sinopsis</label>
+            <textarea 
+              class="form-textarea"
+              [(ngModel)]="pelicula.sinopsis"
+              rows="4"
+              placeholder="Describe la trama de la película..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Duración (minutos)</label>
+              <input 
+                type="number" 
+                class="form-input"
+                [(ngModel)]="pelicula.duracion"
+                min="1"
+                placeholder="120">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Clasificación</label>
+              <select 
+                class="form-select"
+                [(ngModel)]="pelicula.clasificacion">
+                <option value="">Seleccionar clasificación</option>
+                <option *ngFor="let clasificacion of clasificaciones" [value]="clasificacion">
+                  {{ clasificacion }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Género</label>
+            <select 
+              class="form-select"
+              [(ngModel)]="pelicula.genero">
+              <option value="">Seleccionar género</option>
+              <option *ngFor="let genero of generos" [value]="genero">
+                {{ genero }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Right Column - Image Upload -->
+        <div class="form-column">
+          <div class="form-group">
+            <label class="form-label">Imagen de la película</label>
+            <div class="image-upload-container">
+              <div class="image-preview" *ngIf="vistaPreviaImagen; else uploadPlaceholder">
+                <img [src]="vistaPreviaImagen" alt="Vista previa" class="preview-image">
+                <button type="button" class="remove-image-btn" (click)="vistaPreviaImagen = null; archivoSeleccionado = null">
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+              
+              <ng-template #uploadPlaceholder>
+                <div class="upload-placeholder" (click)="fileInput.click()">
+                  <span class="material-icons">cloud_upload</span>
+                  <p>Haz clic para subir imagen</p>
+                  <span class="upload-hint">PNG, JPG hasta 5MB</span>
+                </div>
+              </ng-template>
+
+              <input 
+                #fileInput
+                type="file" 
+                (change)="onFileSelected($event)"
+                accept="image/*"
+                class="file-input">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="limpiarFormulario()">
+          <span class="material-icons">clear</span>
+          Limpiar
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary"
+          (click)="agregarPelicula()"
+          [disabled]="!validarFormulario()">
+          <span class="material-icons">add</span>
+          Agregar Película
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movies Table Section -->
+  <div class="table-section">
+    <div class="table-header">
+      <h2 class="table-title">
+        <span class="material-icons">movie</span>
+        Películas registradas
+      </h2>
+      
+      <div class="search-container">
+        <div class="search-box">
+          <span class="material-icons search-icon">search</span>
+          <input 
+            type="text" 
+            class="search-input"
+            [(ngModel)]="filtroBusqueda"
+            placeholder="Buscar películas...">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="movies-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Imagen</th>
+              <th>Título</th>
+              <th>Género</th>
+              <th>Duración</th>
+              <th>Clasificación</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let pelicula of peliculasFiltradas" class="table-row">
+              <td class="id-cell">{{ pelicula.id }}</td>
+              <td class="image-cell">
+                <img [src]="pelicula.imagenUrl" [alt]="pelicula.titulo" class="movie-image">
+              </td>
+              <td class="title-cell">
+                <strong>{{ pelicula.titulo }}</strong>
+                <p class="sinopsis-preview">{{ pelicula.sinopsis | slice:0:100 }}{{ pelicula.sinopsis.length > 100 ? '...' : '' }}</p>
+              </td>
+              <td class="genre-cell">
+                <span class="genre-badge">{{ pelicula.genero }}</span>
+              </td>
+              <td class="duration-cell">{{ formatearDuracion(pelicula.duracion) }}</td>
+              <td class="rating-cell">
+                <span class="rating-badge">{{ pelicula.clasificacion }}</span>
+              </td>
+              <td class="status-cell">
+                <span class="status-badge" [class.active]="pelicula.estado" [class.inactive]="!pelicula.estado">
+                  {{ pelicula.estado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <div class="action-buttons">
+                  <button 
+                    class="action-btn toggle-btn"
+                    (click)="toggleEstado(pelicula)"
+                    [title]="pelicula.estado ? 'Desactivar' : 'Activar'">
+                    <span class="material-icons" [class.active]="!pelicula.estado">
+                      {{ pelicula.estado ? 'toggle_on' : 'toggle_off' }}
+                    </span>
+                  </button>
+                  <button 
+                    class="action-btn delete-btn"
+                    (click)="eliminarPelicula(pelicula.id)"
+                    title="Eliminar">
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="empty-state" *ngIf="peliculasFiltradas.length === 0">
+          <span class="material-icons empty-icon">movie_filter</span>
+          <h3>No se encontraron películas</h3>
+          <p>No hay películas que coincidan con tu búsqueda.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
