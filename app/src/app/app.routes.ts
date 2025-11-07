@@ -42,6 +42,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./demo/dashboard/components/funciones/funciones').then((m) => m.Funciones),
       },
+      {
+        path: 'roles',
+        loadComponent: () =>
+          import('./demo/dashboard/components/rol/rol').then((m) => m.RoleFormComponent),
+      },
     ],
   },
 ];

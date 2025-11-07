@@ -44,6 +44,12 @@ export class Dashboard implements OnInit, OnDestroy {
       description: 'Administrar salas de cine',
     },
     {
+      path: '/dashboard/roles',
+      icon: '🔒',
+      label: 'Roles y Permisos',
+      description: 'Gestionar roles y permisos del sistema',
+    },
+    {
       path: '/dashboard/asientos',
       icon: '💺',
       label: 'Asientos',
