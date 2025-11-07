@@ -1,0 +1,447 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+  <!-- Header -->
+  <div class="mb-8 text-center">
+    <h1 class="text-4xl font-bold text-gray-900 mb-3">Gestión de Rentas de Salas</h1>
+    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+      Administra las reservas de salas para eventos especiales, proyecciones privadas y más
+    </p>
+  </div>
+
+<!-- Estadísticas Rápidas -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+  <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-gray-900">{{ totalRentas }}</div>
+        <div class="text-sm text-gray-600">Total Rentas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mr-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-gray-900">{{ rentasConfirmadas }}</div>
+        <div class="text-sm text-gray-600">Confirmadas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center mr-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-gray-900">{{ rentasPendientes }}</div>
+        <div class="text-sm text-gray-600">Pendientes</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-gray-900">${{ ingresosTotales }}</div>
+        <div class="text-sm text-gray-600">Ingresos Totales</div>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Panel de Acciones -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-200 mb-8">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 sm:mb-0">Rentas de Salas</h2>
+        <div class="flex space-x-3">
+          <button
+            (click)="buscarSalasDisponibles()"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Ver Disponibilidad
+          </button>
+          <button
+            (click)="abrirModalCrear()"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Nueva Renta
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="p-6 border-b border-gray-200 bg-gray-50">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Fecha Inicio -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Inicio</label>
+          <input
+            type="date"
+            [(ngModel)]="filtros.fecha_inicio"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+        </div>
+
+        <!-- Fecha Fin -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Fin</label>
+          <input
+            type="date"
+            [(ngModel)]="filtros.fecha_fin"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+        </div>
+
+        <!-- Estado -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+          <select
+            [(ngModel)]="filtros.estado"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            <option *ngFor="let estado of estadosRenta" [value]="estado.value">{{ estado.label }}</option>
+          </select>
+        </div>
+
+        <!-- Sala -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Sala</label>
+          <select
+            [(ngModel)]="filtros.sala_id"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            <option value="todas">Todas las salas</option>
+            <option *ngFor="let sala of salasDisponibles" [value]="sala.sala_id">{{ sala.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Usuario -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+          <select
+            [(ngModel)]="filtros.usuario_id"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            <option value="todos">Todos los usuarios</option>
+            <option *ngFor="let usuario of usuarios" [value]="usuario.usuario_id">
+              {{ usuario.nombres }} {{ usuario.apellidos }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Botones de Filtros -->
+      <div class="mt-4 flex justify-between items-center">
+        <span class="text-sm text-gray-600">{{ rentasFiltradas.length }} rentas encontradas</span>
+        <button
+          (click)="limpiarFiltros()"
+          class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors flex items-center"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Limpiar Filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- Lista de Rentas -->
+    <div *ngIf="!isLoading && rentasFiltradas.length > 0" class="divide-y divide-gray-200">
+      <div *ngFor="let renta of rentasFiltradas" class="p-6 hover:bg-gray-50 transition-colors">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+          <!-- Información Principal -->
+          <div class="flex-1">
+        <div class="flex items-start justify-between mb-3">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ renta.nombre_evento }}</h3>
+                <div class="flex flex-wrap gap-2 mb-3">
+                  <span [class]="getEstadoBadgeClass(renta.estado_renta)">
+                    {{ renta.estado_renta }}
+                  </span>
+                  <span [class]="getSalaBadgeClass(renta.sala?.tipo_sala || '')" class="px-3 py-1 rounded-full text-sm font-medium">
+                    {{ renta.sala?.nombre }} • {{ renta.sala?.capacidad_total }} personas
+                  </span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-2xl font-bold text-green-600">{{ formatearPrecio(renta.precio_total) }}</div>
+                <div class="text-sm text-gray-500">{{ getDuracion(renta) }}</div>
+              </div>
+            </div>
+
+            <!-- Detalles -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span class="text-gray-600">Fecha y Hora:</span>
+                <div class="font-medium">{{ formatearFecha(renta.fecha_hora_inicio) }}</div>
+                <div class="text-gray-500">a {{ formatearFecha(renta.fecha_hora_fin) }}</div>
+              </div>
+              <div>
+                <span class="text-gray-600">Usuario:</span>
+                <div class="font-medium">
+                  {{ renta.usuario ? renta.usuario.nombres + ' ' + renta.usuario.apellidos : 'No asignado' }}
+                </div>
+                <div class="text-gray-500">{{ renta.usuario?.email }}</div>
+              </div>
+              <div>
+                <span class="text-gray-600">Métricas:</span>
+                <div class="font-medium" *ngIf="renta.metricas">
+                  {{ renta.metricas.costo_por_hora | number:'1.2-2' }}/hora
+                </div>
+                <div class="text-gray-500" *ngIf="renta.metricas && renta.metricas.dias_restantes > 0">
+                  {{ renta.metricas.dias_restantes }} días restantes
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="mt-4 lg:mt-0 lg:ml-6 flex space-x-2">
+            <button
+              (click)="abrirModalEditar(renta)"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              Editar
+            </button>
+            <button
+              (click)="eliminarRenta(renta)"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              Eliminar
+            </button>
+            <div class="relative" *ngIf="renta.estado_renta === 'Pendiente'">
+              <button
+                (click)="cambiarEstadoRenta(renta, 'Confirmada')"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && rentasFiltradas.length === 0" class="text-center py-12">
+      <div class="max-w-md mx-auto">
+        <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No se encontraron rentas</h3>
+        <p class="text-gray-500 mb-4">No hay rentas que coincidan con los filtros aplicados</p>
+        <button
+          (click)="limpiarFiltros()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Renta -->
+  <div 
+    *ngIf="isModalOpen"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+    (click)="cerrarModal()"
+  >
+    <div 
+      class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+      (click)="stopPropagation($event)"
+    >
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-semibold text-gray-900">
+            {{ isCreandoRenta ? 'Nueva Renta de Sala' : 'Editar Renta' }}
+          </h3>
+          <button
+            (click)="cerrarModal()"
+            class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <form 
+        (ngSubmit)="isCreandoRenta ? crearRenta() : actualizarRenta()" 
+        class="p-6 space-y-6"
+      >
+        <!-- Información Básica -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Nombre del Evento -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Evento *</label>
+            <input
+              type="text"
+              [(ngModel)]="datosReserva.nombre_evento"
+              name="nombre_evento"
+              placeholder="Ej: Conferencia de Tecnología, Fiesta de Cumpleaños..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required
+            >
+          </div>
+
+          <!-- Sala -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Sala *</label>
+            <select
+              [(ngModel)]="datosReserva.sala_id"
+              (ngModelChange)="onCambiarFechas()"
+              name="sala_id"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required
+            >
+              <option value="">Seleccionar sala</option>
+              <option 
+                *ngFor="let sala of salasDisponibles" 
+                [value]="sala.sala_id"
+                [disabled]="!sala.disponible"
+              >
+                {{ sala.nombre }} ({{ sala.capacidad_total }} personas) 
+                {{ !sala.disponible ? '- NO DISPONIBLE' : '' }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Usuario -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+            <select
+              [(ngModel)]="datosReserva.usuario_id"
+              name="usuario_id"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            >
+              <option [value]="undefined">Sin usuario asignado</option>
+              <option *ngFor="let usuario of usuarios" [value]="usuario.usuario_id">
+                {{ usuario.nombres }} {{ usuario.apellidos }} ({{ usuario.email }})
+              </option>
+            </select>
+          </div>
+
+          <!-- Fecha y Hora Inicio -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora Inicio *</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="datosReserva.fecha_hora_inicio"
+              (ngModelChange)="onCambiarFechas()"
+              name="fecha_hora_inicio"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required
+            >
+          </div>
+
+          <!-- Fecha y Hora Fin -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Fecha y Hora Fin *</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="datosReserva.fecha_hora_fin"
+              (ngModelChange)="onCambiarFechas()"
+              name="fecha_hora_fin"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required
+            >
+          </div>
+
+          <!-- Precio Total -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Precio Total *</label>
+            <input
+              type="number"
+              [(ngModel)]="datosReserva.precio_total"
+              name="precio_total"
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required
+            >
+          </div>
+
+          <!-- Estado -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <select
+              [(ngModel)]="datosReserva.estado_renta"
+              name="estado_renta"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            >
+              <option value="Pendiente">Pendiente</option>
+              <option value="Confirmada">Confirmada</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Resumen de Precio -->
+        <div *ngIf="datosReserva.precio_total > 0" class="bg-blue-50 p-4 rounded-lg">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-blue-900">Total a pagar:</span>
+            <span class="text-2xl font-bold text-blue-600">{{ formatearPrecio(datosReserva.precio_total) }}</span>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            (click)="cerrarModal()"
+            class="px-6 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="!validarReserva()"
+            [class]="validarReserva() ? 
+              'px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors' :
+              'px-6 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg cursor-not-allowed'"
+          >
+            {{ isCreandoRenta ? 'Crear Renta' : 'Actualizar Renta' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
