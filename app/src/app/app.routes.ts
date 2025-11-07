@@ -8,9 +8,19 @@ export const routes: Routes = [
     component: Dashboard,
     children: [
       {
+        path: 'renta',
+        loadComponent: () =>
+          import('./demo/dashboard/components/renta/renta').then((m) => m.RentaSalasComponent),
+      },
+      {
         path: 'peliculas',
         loadComponent: () =>
           import('./demo/dashboard/components/peliculas/peliculas').then((m) => m.Peliculas),
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./demo/dashboard/components/usuarios/usuarios').then((m) => m.UserManagementComponent),
       },
       {
         path: 'boletos',

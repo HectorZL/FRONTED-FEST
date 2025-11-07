@@ -9,7 +9,9 @@ import { Subscription } from 'rxjs';
 export interface PeliculaFormData extends Omit<Pelicula, 'id'> {}
 
 // Local interface for the UI
-type PeliculaUI = Pelicula;
+interface PeliculaUI extends Pelicula {
+  procesandoEstado?: boolean;
+}
 
 @Component({
   selector: 'app-peliculas',
@@ -106,9 +108,31 @@ export class Peliculas implements OnInit, OnDestroy {
   }
 
   toggleEstado(pelicula: PeliculaUI) {
-    // TODO: Implement status toggle in the service
-    pelicula.estado = !pelicula.estado;
-    console.log('Cambiando estado de la película:', pelicula);
+    if (!pelicula.id) {
+      console.error('No se puede actualizar el estado: ID de película no válido');
+      return;
+    }
+    
+    const nuevoEstado = !pelicula.estado;
+    
+    this.peliculasService.actualizarEstadoPelicula(pelicula.id, nuevoEstado).subscribe({
+      next: (result) => {
+        if (!result.success) {
+          // Revertir el cambio en la UI si hay un error
+          pelicula.estado = !nuevoEstado;
+          console.error('Error al actualizar el estado:', result.error);
+          alert(`Error al actualizar el estado: ${result.error}`);
+        } else {
+          console.log('Estado actualizado correctamente');
+        }
+      },
+      error: (error) => {
+        // Revertir el cambio en la UI
+        pelicula.estado = !nuevoEstado;
+        console.error('Error al actualizar el estado:', error);
+        alert('Ocurrió un error al actualizar el estado de la película');
+      }
+    });
   }
 
   editarPelicula(pelicula: PeliculaUI) {
@@ -116,23 +140,40 @@ export class Peliculas implements OnInit, OnDestroy {
   }
 
   eliminarPelicula(id: number) {
-    // TODO: Implement delete in the service
     if (confirm('¿Estás seguro de eliminar esta película?')) {
-      this.peliculas = this.peliculas.filter(p => p.id !== id);
+      this.peliculasService.eliminarPelicula(id).subscribe({
+        next: (result) => {
+          if (result.success) {
+            // La eliminación se maneja automáticamente por la suscripción a peliculas$
+            console.log('Película eliminada exitosamente');
+          } else {
+            alert(`Error al eliminar la película: ${result.error}`);
+          }
+        },
+        error: (error) => {
+          console.error('Error al eliminar la película:', error);
+          alert('Ocurrió un error al intentar eliminar la película');
+        }
+      });
     }
   }
 
   get peliculasFiltradas() {
-    if (!this.filtroBusqueda) {
+    if (!this.filtroBusqueda || this.filtroBusqueda.trim() === '') {
       return this.peliculas;
     }
-    const busqueda = this.filtroBusqueda.toLowerCase();
-    return this.peliculas.filter(pelicula =>
-      pelicula.titulo.toLowerCase().includes(busqueda) ||
-      pelicula.genero.some(g => g.toLowerCase().includes(busqueda)) ||
-      pelicula.clasificacion.toLowerCase().includes(busqueda) ||
-      pelicula.sinopsis.toLowerCase().includes(busqueda)
-    );
+    
+    const busqueda = this.filtroBusqueda.trim().toLowerCase();
+    return this.peliculas.filter(pelicula => {
+      // Verificar si alguna propiedad de la película coincide con la búsqueda
+      return (
+        (pelicula.titulo && pelicula.titulo.toLowerCase().includes(busqueda)) ||
+        (pelicula.sinopsis && pelicula.sinopsis.toLowerCase().includes(busqueda)) ||
+        (pelicula.clasificacion && pelicula.clasificacion.toLowerCase().includes(busqueda)) ||
+        (pelicula.genero && Array.isArray(pelicula.genero) && 
+         pelicula.genero.some(g => g && g.toLowerCase().includes(busqueda)))
+      );
+    });
   }
 
   formatearDuracion(minutos: number): string {

@@ -20,6 +20,18 @@ export class Dashboard implements OnInit, OnDestroy {
 
   menuItems = [
     {
+      path: '/dashboard/usuarios',
+      icon: '👥',
+      label: 'Usuarios',
+      description: 'Gestionar usuarios del sistema',
+    },
+    {
+      path: '/dashboard/renta',
+      icon: '🏢',
+      label: 'Renta de Salas',
+      description: 'Gestionar renta de salas de cine',
+    },
+    {
       path: '/dashboard/peliculas',
       icon: '🎬',
       label: 'Películas',
@@ -50,10 +62,6 @@ export class Dashboard implements OnInit, OnDestroy {
       description: 'Gestionar venta de boletos',
     },
     {
-      path: '/dashboard/usuarios',
-      icon: '👥',
-      label: 'Usuarios',
-      description: 'Administrar usuarios del sistema',
     },
     {
       path: '/dashboard/roles',
