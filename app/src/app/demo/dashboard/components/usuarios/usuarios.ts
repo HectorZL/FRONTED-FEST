@@ -1,39 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  status: UserStatus;
-  avatar?: string;
-  lastLogin?: Date;
-  createdAt: Date;
-  department?: string;
-}
-
-enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  EDITOR = 'editor',
-  VIEWER = 'viewer'
-}
-
-enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
-  SUSPENDED = 'suspended'
-}
+import { Subscription } from 'rxjs';
+import { UsuarioService, UsuarioCompleto, Rol, CrearUsuarioData, ActualizarUsuarioData } from '../../../services/usuario.service';
 
 interface UserFilters {
   search: string;
-  role: UserRole | 'all';
-  status: UserStatus | 'all';
-  department: string;
+  role: string;
+  tipo_usuario: string;
+  status: string;
 }
 
 @Component({
@@ -42,146 +17,168 @@ interface UserFilters {
   imports: [CommonModule, FormsModule],
   templateUrl: './usuarios.html'
 })
-export class UserManagementComponent implements OnInit {
-  users: User[] = [];
-  filteredUsers: User[] = [];
-  selectedUser: User | null = null;
+export class UserManagementComponent implements OnInit, OnDestroy {
+  usuarios: UsuarioCompleto[] = [];
+  filteredUsers: UsuarioCompleto[] = [];
+  selectedUser: UsuarioCompleto | null = null;
+  roles: Rol[] = [];
   isEditModalOpen = false;
   isLoading = true;
+  private subscriptions: Subscription = new Subscription();
 
   filters: UserFilters = {
     search: '',
     role: 'all',
-    status: 'all',
-    department: ''
+    tipo_usuario: 'all',
+    status: 'all'
   };
 
-  roles = [
+  // Opciones para filtros
+  roleOptions = [
     { value: 'all', label: 'Todos los roles' },
-    { value: UserRole.ADMIN, label: 'Administrador' },
-    { value: UserRole.MANAGER, label: 'Gerente' },
-    { value: UserRole.EDITOR, label: 'Editor' },
-    { value: UserRole.VIEWER, label: 'Solo lectura' }
+    { value: '1', label: 'Administrador' },
+    { value: '2', label: 'Trabajador' }
   ];
 
-  statuses = [
+  tipoUsuarioOptions = [
+    { value: 'all', label: 'Todos los tipos' },
+    { value: 'trabajador', label: 'Trabajador' },
+    { value: 'estudiante', label: 'Estudiante' }
+  ];
+
+  statusOptions = [
     { value: 'all', label: 'Todos los estados' },
-    { value: UserStatus.ACTIVE, label: 'Activo' },
-    { value: UserStatus.INACTIVE, label: 'Inactivo' },
-    { value: UserStatus.PENDING, label: 'Pendiente' },
-    { value: UserStatus.SUSPENDED, label: 'Suspendido' }
+    { value: 'active', label: 'Activo' },
+    { value: 'inactive', label: 'Inactivo' }
   ];
 
-  departments = ['TI', 'Ventas', 'Marketing', 'Recursos Humanos', 'Finanzas'];
+  constructor(private usuarioService: UsuarioService) {}
 
   ngOnInit(): void {
-    this.loadMockUsers();
+    this.cargarDatos();
   }
 
-  private loadMockUsers(): void {
-    // Simular carga de datos
-    setTimeout(() => {
-      this.users = [
-        {
-          id: '1',
-          firstName: 'María',
-          lastName: 'García',
-          email: 'maria.garcia@empresa.com',
-          role: UserRole.ADMIN,
-          status: UserStatus.ACTIVE,
-          avatar: 'MG',
-          lastLogin: new Date('2024-01-15'),
-          createdAt: new Date('2023-01-10'),
-          department: 'TI'
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private cargarDatos(): void {
+    // Cargar usuarios
+    this.subscriptions.add(
+      this.usuarioService.usuarios$.subscribe({
+        next: (usuarios) => {
+          this.usuarios = usuarios;
+          this.aplicarFiltros();
+          this.isLoading = false;
         },
-        {
-          id: '2',
-          firstName: 'Carlos',
-          lastName: 'Rodríguez',
-          email: 'carlos.rodriguez@empresa.com',
-          role: UserRole.MANAGER,
-          status: UserStatus.ACTIVE,
-          avatar: 'CR',
-          lastLogin: new Date('2024-01-14'),
-          createdAt: new Date('2023-03-15'),
-          department: 'Ventas'
-        },
-        {
-          id: '3',
-          firstName: 'Ana',
-          lastName: 'López',
-          email: 'ana.lopez@empresa.com',
-          role: UserRole.EDITOR,
-          status: UserStatus.PENDING,
-          avatar: 'AL',
-          lastLogin: new Date('2024-01-10'),
-          createdAt: new Date('2023-06-20'),
-          department: 'Marketing'
-        },
-        {
-          id: '4',
-          firstName: 'Pedro',
-          lastName: 'Martínez',
-          email: 'pedro.martinez@empresa.com',
-          role: UserRole.VIEWER,
-          status: UserStatus.INACTIVE,
-          avatar: 'PM',
-          lastLogin: new Date('2023-12-01'),
-          createdAt: new Date('2023-08-05'),
-          department: 'Finanzas'
+        error: (error) => {
+          console.error('Error al cargar usuarios:', error);
+          this.isLoading = false;
         }
-      ];
-      this.filteredUsers = [...this.users];
-      this.isLoading = false;
-    }, 1000);
+      })
+    );
+
+    // Cargar roles
+    this.subscriptions.add(
+      this.usuarioService.getRoles().subscribe({
+        next: (roles) => {
+          this.roles = roles;
+          // Actualizar opciones de roles con los datos reales
+          this.roleOptions = [
+            { value: 'all', label: 'Todos los roles' },
+            ...roles.map(rol => ({ value: rol.rol_id.toString(), label: rol.nombre }))
+          ];
+        },
+        error: (error) => {
+          console.error('Error al cargar roles:', error);
+        }
+      })
+    );
+  }
+
+  aplicarFiltros(): void {
+    this.filteredUsers = this.usuarios.filter(usuario => {
+      const matchesSearch = !this.filters.search || 
+        usuario.nombres.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+        usuario.apellidos.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+        usuario.email.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+        usuario.cedula.toLowerCase().includes(this.filters.search.toLowerCase());
+      
+      const matchesRole = this.filters.role === 'all' || usuario.rol_id.toString() === this.filters.role;
+      const matchesTipoUsuario = this.filters.tipo_usuario === 'all' || usuario.tipo_usuario === this.filters.tipo_usuario;
+      
+      // Para estado, podemos usar métricas o fecha de creación
+      const matchesStatus = this.filters.status === 'all' || 
+        (this.filters.status === 'active' && this.esUsuarioActivo(usuario)) ||
+        (this.filters.status === 'inactive' && !this.esUsuarioActivo(usuario));
+
+      return matchesSearch && matchesRole && matchesTipoUsuario && matchesStatus;
+    });
+  }
+
+  private esUsuarioActivo(usuario: UsuarioCompleto): boolean {
+    // Considerar activo si ha comprado boletos
+    return (usuario.metricas?.total_boletos_comprados || 0) > 0;
   }
 
   onFiltersChange(): void {
-    this.filteredUsers = this.users.filter(user => {
-      const matchesSearch = !this.filters.search || 
-        user.firstName.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-        user.email.toLowerCase().includes(this.filters.search.toLowerCase());
-      
-      const matchesRole = this.filters.role === 'all' || user.role === this.filters.role;
-      const matchesStatus = this.filters.status === 'all' || user.status === this.filters.status;
-      const matchesDepartment = !this.filters.department || user.department === this.filters.department;
-
-      return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
-    });
+    this.aplicarFiltros();
   }
 
   clearFilters(): void {
     this.filters = {
       search: '',
       role: 'all',
-      status: 'all',
-      department: ''
+      tipo_usuario: 'all',
+      status: 'all'
     };
-    this.onFiltersChange();
+    this.aplicarFiltros();
   }
 
-  onEditUser(user: User): void {
-    this.selectedUser = { ...user };
+  onEditUser(usuario: UsuarioCompleto): void {
+    this.selectedUser = { ...usuario };
     this.isEditModalOpen = true;
   }
 
-  onDeleteUser(user: User): void {
-    if (confirm(`¿Estás seguro de que quieres eliminar a ${user.firstName} ${user.lastName}?`)) {
-      this.users = this.users.filter(u => u.id !== user.id);
-      this.onFiltersChange();
+  onDeleteUser(usuario: UsuarioCompleto): void {
+    if (confirm(`¿Estás seguro de que quieres eliminar a ${usuario.nombres} ${usuario.apellidos}?`)) {
+      this.subscriptions.add(
+        this.usuarioService.eliminarUsuario(usuario.usuario_id).subscribe({
+          next: () => {
+            console.log('Usuario eliminado exitosamente');
+          },
+          error: (error) => {
+            console.error('Error al eliminar usuario:', error);
+            alert('Error al eliminar usuario: ' + error.message);
+          }
+        })
+      );
     }
   }
 
-  onSaveUser(userData: Partial<User>): void {
+  onSaveUser(usuarioData: Partial<UsuarioCompleto>): void {
     if (this.selectedUser) {
-      const index = this.users.findIndex(u => u.id === this.selectedUser!.id);
-      if (index !== -1) {
-        this.users[index] = { ...this.users[index], ...userData };
-        this.onFiltersChange();
-      }
-      this.isEditModalOpen = false;
-      this.selectedUser = null;
+      const updateData: ActualizarUsuarioData = {
+        nombres: usuarioData.nombres,
+        apellidos: usuarioData.apellidos,
+        email: usuarioData.email,
+        tipo_usuario: usuarioData.tipo_usuario as 'trabajador' | 'estudiante',
+        rol_id: usuarioData.rol_id
+      };
+
+      this.subscriptions.add(
+        this.usuarioService.actualizarUsuario(this.selectedUser.usuario_id, updateData).subscribe({
+          next: (usuarioActualizado) => {
+            console.log('Usuario actualizado:', usuarioActualizado);
+            this.isEditModalOpen = false;
+            this.selectedUser = null;
+          },
+          error: (error) => {
+            console.error('Error al actualizar usuario:', error);
+            alert('Error al actualizar usuario: ' + error.message);
+          }
+        })
+      );
     }
   }
 
@@ -190,48 +187,53 @@ export class UserManagementComponent implements OnInit {
     this.selectedUser = null;
   }
 
-  getRoleBadgeClass(role: UserRole): string {
-    const classes = {
-      [UserRole.ADMIN]: 'bg-purple-100 text-purple-800',
-      [UserRole.MANAGER]: 'bg-blue-100 text-blue-800',
-      [UserRole.EDITOR]: 'bg-green-100 text-green-800',
-      [UserRole.VIEWER]: 'bg-gray-100 text-gray-800'
+  // Métodos auxiliares para la UI
+  getRoleBadgeClass(rolId: number): string {
+    const classes: { [key: number]: string } = {
+      1: 'bg-purple-100 text-purple-800', // Admin
+      2: 'bg-blue-100 text-blue-800',     // Trabajador
     };
-    return `px-2 py-1 rounded-full text-xs font-medium ${classes[role]}`;
+    return `px-2 py-1 rounded-full text-xs font-medium ${classes[rolId] || 'bg-gray-100 text-gray-800'}`;
   }
 
-  getStatusBadgeClass(status: UserStatus): string {
-    const classes = {
-      [UserStatus.ACTIVE]: 'bg-green-100 text-green-800',
-      [UserStatus.INACTIVE]: 'bg-gray-100 text-gray-800',
-      [UserStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-      [UserStatus.SUSPENDED]: 'bg-red-100 text-red-800'
+  getTipoUsuarioBadgeClass(tipo: string): string {
+    const classes: { [key: string]: string } = {
+      'trabajador': 'bg-green-100 text-green-800',
+      'estudiante': 'bg-yellow-100 text-yellow-800'
     };
-    return `px-2 py-1 rounded-full text-xs font-medium ${classes[status]}`;
+    return `px-2 py-1 rounded-full text-xs font-medium ${classes[tipo] || 'bg-gray-100 text-gray-800'}`;
   }
 
-  getStatusLabel(status: UserStatus): string {
-    const labels = {
-      [UserStatus.ACTIVE]: 'Activo',
-      [UserStatus.INACTIVE]: 'Inactivo',
-      [UserStatus.PENDING]: 'Pendiente',
-      [UserStatus.SUSPENDED]: 'Suspendido'
-    };
-    return labels[status];
+  getStatusBadgeClass(usuario: UsuarioCompleto): string {
+    const isActive = this.esUsuarioActivo(usuario);
+    return `px-2 py-1 rounded-full text-xs font-medium ${
+      isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+    }`;
   }
 
-  getRoleLabel(role: UserRole): string {
-    const labels = {
-      [UserRole.ADMIN]: 'Administrador',
-      [UserRole.MANAGER]: 'Gerente',
-      [UserRole.EDITOR]: 'Editor',
-      [UserRole.VIEWER]: 'Solo lectura'
-    };
-    return labels[role];
+  getRoleLabel(rolId: number): string {
+    const rol = this.roles.find(r => r.rol_id === rolId);
+    return rol?.nombre || 'Sin rol';
   }
 
-  getInitials(firstName: string, lastName: string): string {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  getStatusLabel(usuario: UsuarioCompleto): string {
+    return this.esUsuarioActivo(usuario) ? 'Activo' : 'Inactivo';
+  }
+
+  getInitials(nombres: string, apellidos: string): string {
+    return `${nombres.charAt(0)}${apellidos.charAt(0)}`.toUpperCase();
+  }
+
+  formatearFecha(fecha: string): string {
+    if (!fecha) return 'Nunca';
+    return new Date(fecha).toLocaleDateString('es-ES');
+  }
+
+  getMetricasTexto(usuario: UsuarioCompleto): string {
+    const metricas = usuario.metricas;
+    if (!metricas) return 'Sin actividad';
+    
+    return `${metricas.total_boletos_comprados} compras • $${metricas.total_gastado}`;
   }
 
   stopPropagation(event: Event): void {
