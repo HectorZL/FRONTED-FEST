@@ -79,6 +79,8 @@ export class UsuarioService {
         this.fetchInitialDataAndSubscribe();
     }
 
+    
+
     private fetchInitialDataAndSubscribe(): void {
         this.getUsuariosCompletos().subscribe(
             initialList => {
@@ -502,4 +504,6 @@ export class UsuarioService {
             })
         );
     }
+
+    
 }

@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { UsuarioService } from '../services/usuario.service';
 
 @Component({
   selector: 'app-login',
@@ -16,10 +17,11 @@ export class LoginComponent implements OnInit {
   showPassword = signal(false);
   errorMessage = signal('');
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router
-  ) {
+  private usuarioService = inject(UsuarioService);
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
@@ -34,19 +36,40 @@ export class LoginComponent implements OnInit {
       this.isLoading.set(true);
       this.errorMessage.set('');
 
-      // Simular llamada a API
-      setTimeout(() => {
-        this.isLoading.set(false);
-        
-        // Aquí iría la lógica real de autenticación
-        const { email, password } = this.loginForm.value;
-        
-        if (email === 'usuario@ejemplo.com' && password === '123456') {
-          this.router.navigate(['/dashboard']);
-        } else {
-          this.errorMessage.set('Credenciales incorrectas. Intente nuevamente.');
+      const { email, password } = this.loginForm.value;
+
+      // Usar el método existente getUsuariosCompletos()
+      this.usuarioService.getUsuariosCompletos().subscribe({
+        next: (usuarios) => {
+          this.isLoading.set(false);
+          
+          // Buscar usuario por email y contraseña
+          const usuarioEncontrado = usuarios.find(usuario => 
+            usuario.email === email && usuario.password_hash === password
+          );
+
+          if (usuarioEncontrado) {
+            // Verificar si es administrador
+            if (usuarioEncontrado.rol?.nombre?.toLowerCase() === 'administrador') {
+              // Guardar sesión
+              localStorage.setItem('currentUser', JSON.stringify(usuarioEncontrado));
+              localStorage.setItem('isAuthenticated', 'true');
+              
+              // Redirigir al dashboard
+              this.router.navigate(['/dashboard']);
+            } else {
+              this.errorMessage.set('Solo los administradores pueden acceder al sistema');
+            }
+          } else {
+            this.errorMessage.set('Credenciales incorrectas. Intente nuevamente.');
+          }
+        },
+        error: (error) => {
+          this.isLoading.set(false);
+          this.errorMessage.set('Error de conexión. Intente nuevamente.');
+          console.error('Error en login:', error);
         }
-      }, 1500);
+      });
     } else {
       this.markFormGroupTouched();
     }
