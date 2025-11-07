@@ -152,6 +152,37 @@ export class PeliculasService {
   }
 
   /**
+   * Actualiza el estado de una película
+   * @param id ID de la película
+   * @param nuevoEstado Nuevo estado a establecer
+   * @returns Observable con el resultado de la operación
+   */
+  actualizarEstadoPelicula(id: number, nuevoEstado: boolean): Observable<{ success: boolean; error?: string }> {
+    return from(
+      supabase
+        .from(this.TABLE_NAME)
+        .update({ estado: nuevoEstado })
+        .eq('pelicula_id', id)
+    ).pipe(
+      map((response: any) => {
+        if (response.error) {
+          console.error('Error al actualizar estado de la película:', response.error);
+          return { success: false, error: response.error.message };
+        }
+        
+        // Actualizar la lista local
+        const index = this.currentPeliculas.findIndex(p => p.id === id);
+        if (index !== -1) {
+          this.currentPeliculas[index] = { ...this.currentPeliculas[index], estado: nuevoEstado };
+          this.peliculasSubject.next([...this.currentPeliculas]);
+        }
+        
+        return { success: true };
+      })
+    );
+  }
+
+  /**
    * Método principal para que los componentes se suscriban.
    */
   getListaPeliculas(): Observable<Pelicula[]> {

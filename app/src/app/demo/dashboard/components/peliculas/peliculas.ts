@@ -9,7 +9,9 @@ import { Subscription } from 'rxjs';
 export interface PeliculaFormData extends Omit<Pelicula, 'id'> {}
 
 // Local interface for the UI
-type PeliculaUI = Pelicula;
+interface PeliculaUI extends Pelicula {
+  procesandoEstado?: boolean;
+}
 
 @Component({
   selector: 'app-peliculas',
@@ -106,9 +108,31 @@ export class Peliculas implements OnInit, OnDestroy {
   }
 
   toggleEstado(pelicula: PeliculaUI) {
-    // TODO: Implement status toggle in the service
-    pelicula.estado = !pelicula.estado;
-    console.log('Cambiando estado de la película:', pelicula);
+    if (!pelicula.id) {
+      console.error('No se puede actualizar el estado: ID de película no válido');
+      return;
+    }
+    
+    const nuevoEstado = !pelicula.estado;
+    
+    this.peliculasService.actualizarEstadoPelicula(pelicula.id, nuevoEstado).subscribe({
+      next: (result) => {
+        if (!result.success) {
+          // Revertir el cambio en la UI si hay un error
+          pelicula.estado = !nuevoEstado;
+          console.error('Error al actualizar el estado:', result.error);
+          alert(`Error al actualizar el estado: ${result.error}`);
+        } else {
+          console.log('Estado actualizado correctamente');
+        }
+      },
+      error: (error) => {
+        // Revertir el cambio en la UI
+        pelicula.estado = !nuevoEstado;
+        console.error('Error al actualizar el estado:', error);
+        alert('Ocurrió un error al actualizar el estado de la película');
+      }
+    });
   }
 
   editarPelicula(pelicula: PeliculaUI) {
