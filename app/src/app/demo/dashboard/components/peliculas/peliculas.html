@@ -62,9 +62,14 @@
                 Imagen
               </th>
               <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-48"
               >
                 Título
+              </th>
+              <th
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+              >
+                Sinopsis
               </th>
               <th
                 class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
@@ -114,9 +119,14 @@
 
               <!-- Título -->
               <td class="px-6 py-4">
-                <div class="max-w-xs">
+                <div class="w-48">
                   <h3 class="text-sm font-semibold text-gray-900">{{ pelicula.titulo }}</h3>
                 </div>
+              </td>
+
+              <!-- Sinopsis -->
+              <td class="px-6 py-4">
+                <p class="text-sm text-gray-600 line-clamp-2 max-w-md">{{ pelicula.sinopsis || 'Sin sinopsis disponible' }}</p>
               </td>
 
               <!-- Géneros -->
