@@ -1,198 +1,303 @@
-<div class="p-6 bg-gray-50 min-h-screen">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestión de Boletos</h1>
-    <p class="text-gray-600">Administra y controla los boletos del sistema cinematográfico</p>
-  </div>
+<div class="min-h-full bg-gray-50">
+  <!-- Header Section -->
+  <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-6 rounded-xl mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Boletos Base</h1>
+        <p class="text-gray-600 mt-2">Administra los tipos de boletos disponibles para las funciones</p>
+      </div>
 
-  <!-- Estadísticas -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <div class="flex items-center">
-        <div class="p-3 bg-blue-100 rounded-lg">
-          <span class="text-2xl">🎫</span>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Total Boletos</p>
-          <p class="text-2xl font-bold text-gray-900">{{ tickets.length }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <div class="flex items-center">
-        <div class="p-3 bg-green-100 rounded-lg">
-          <span class="text-2xl">✅</span>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Activos</p>
-          <p class="text-2xl font-bold text-gray-900">{{ activeTicketsCount }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <div class="flex items-center">
-        <div class="p-3 bg-blue-100 rounded-lg">
-          <span class="text-2xl">🎬</span>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Usados</p>
-          <p class="text-2xl font-bold text-gray-900">{{ usedTicketsCount }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <div class="flex items-center">
-        <div class="p-3 bg-red-100 rounded-lg">
-          <span class="text-2xl">❌</span>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Cancelados</p>
-          <p class="text-2xl font-bold text-gray-900">{{ cancelledTicketsCount }}</p>
-        </div>
+      <!-- Botones de acción -->
+      <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+        <button (click)="abrirModalCrearBoleto()"
+          class="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200">
+          <span class="material-icons text-lg">add</span>
+          <span>Crear Boleto</span>
+        </button>
+        <button (click)="descargarReporte()"
+          class="flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200">
+          <span class="material-icons text-lg">download</span>
+          <span>Descargar Reporte</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Tabla de Boletos -->
-  <div class="flex justify-end mb-4">
-    <button 
-      (click)="toggleModal()"
-      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-      </svg>
-      Agregar Boleto
-    </button>
+  <!-- Loading State -->
+  <div *ngIf="cargando" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h2 class="text-xl font-semibold text-gray-800">Boletos Registrados</h2>
-    </div>
-    
-    <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              ID
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Película
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Fecha & Hora
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Sala & Asiento
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Precio
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Estado
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Acciones
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let ticket of tickets" class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="text-sm font-medium text-gray-900">#{{ ticket.id.toString().padStart(3, '0') }}</span>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm font-medium text-gray-900">{{ ticket.pelicula }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ ticket.fecha }}</div>
-              <div class="text-sm text-gray-500">{{ ticket.hora }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ ticket.sala }}</div>
-              <div class="text-sm text-gray-500">Asiento: {{ ticket.asiento }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="text-sm font-medium text-gray-900">${{ ticket.precio.toFixed(2) }}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border 
-                         {{ getEstadoColor(ticket.estado) }}">
-                {{ getEstadoIcon(ticket.estado) }} 
-                {{ ticket.estado.charAt(0).toUpperCase() + ticket.estado.slice(1) }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <div class="flex space-x-2">
-                <button 
-                  (click)="descargarTicket(ticket)"
-                  class="text-blue-600 hover:text-blue-900 transition-colors"
-                  [disabled]="ticket.estado === 'cancelado'"
-                  [class.opacity-50]="ticket.estado === 'cancelado'"
-                  [class.cursor-not-allowed]="ticket.estado === 'cancelado'">
-                  📥 Descargar
-                </button>
-                <button 
-                  *ngIf="ticket.estado === 'activo'"
-                  (click)="cancelarTicket(ticket)"
-                  class="text-red-600 hover:text-red-900 transition-colors">
-                  ❌ Cancelar
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Estadísticas Rápidas -->
+  <div *ngIf="!cargando && estadisticas" class="px-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+        <div class="text-2xl font-bold text-blue-600">{{ estadisticas.total_boletos_base }}</div>
+        <div class="text-sm text-gray-600">Boletos Base</div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+        <div class="text-2xl font-bold text-green-600">{{ estadisticas.boletos_vendidos_hoy }}</div>
+        <div class="text-sm text-gray-600">Ventas Hoy</div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+        <div class="text-2xl font-bold text-purple-600">{{ formatearPrecio(estadisticas.ingresos_totales) }}</div>
+        <div class="text-sm text-gray-600">Ingresos Totales</div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+        <div class="text-2xl font-bold text-orange-600">{{ estadisticas.boletos_activos }}</div>
+        <div class="text-sm text-gray-600">Boletos Activos</div>
+      </div>
     </div>
   </div>
 
-  <!-- Tarjeta de Ejemplo de Boleto -->
-  <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Vista Previa de Boleto</h3>
-    <div class="max-w-md mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 border-2 border-dashed border-blue-300 rounded-lg p-6">
-      <div class="text-center mb-4">
-        <div class="text-2xl font-bold text-gray-900">CINE PLUS</div>
-        <div class="text-sm text-gray-600">Sistema de Gestión Cinematográfica</div>
+  <!-- Filtros y Búsqueda -->
+  <div *ngIf="!cargando" class="px-6 mb-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Filtros y Búsqueda</h3>
+        <div class="flex items-center space-x-3">
+          <button (click)="limpiarFiltros()"
+            class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+            <span class="material-icons text-sm">refresh</span>
+            <span>Limpiar filtros</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Filtro por Película -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Película</label>
+          <input type="text" [(ngModel)]="filtroPelicula" (ngModelChange)="onFiltroChange()"
+            placeholder="Buscar por película..."
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+        </div>
+
+        <!-- Filtro por Fecha -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Fecha de Función</label>
+          <input type="date" [(ngModel)]="filtroFecha" (ngModelChange)="onFiltroChange()"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+        </div>
+
+        <!-- Filtro por Ventas -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Estado de Ventas</label>
+          <select [(ngModel)]="filtroVentas" (ngModelChange)="onFiltroChange()"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+            <option value="todos">Todos los boletos</option>
+            <option value="con-ventas">Con ventas</option>
+            <option value="sin-ventas">Sin ventas</option>
+            <option value="populares">Más populares (+10 ventas)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Información de resultados -->
+      <div class="mt-4">
+        <div class="text-sm text-gray-600 bg-gray-50 px-4 py-3 rounded-xl">
+          <div class="font-semibold">{{ boletosFiltrados.length }} boletos base</div>
+          <div>de {{ boletos.length }} totales</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Boletos Base -->
+  <div *ngIf="!cargando" class="px-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <!-- Table Header -->
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span class="material-icons text-blue-600">local_activity</span>
+            <h2 class="text-xl font-semibold text-gray-900">Boletos Base Disponibles</h2>
+            <span class="text-sm font-normal text-gray-500">
+              ({{ boletosFiltrados.length }} de {{ boletos.length }} boletos)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Función</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Precio Base</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Métricas de Ventas</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha Creación</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let boleto of boletosFiltrados" class="hover:bg-gray-50 transition-colors duration-150">
+              
+              <!-- ID -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-medium text-gray-900">#{{ boleto.boleto_id }}</span>
+                <div class="text-xs text-gray-500 mt-1">QR: {{ boleto.qr?.substring(0, 8) }}...</div>
+              </td>
+
+              <!-- Función -->
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ boleto.funcion?.pelicula_titulo || 'Película no disponible' }}
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ boleto.funcion?.sala_nombre || 'Sala no disponible' }} • 
+                  {{ formatearFecha(boleto.funcion?.fecha_hora_inicio || '') }}
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                  Duración: {{ boleto.funcion?.pelicula?.duracion || 'N/A' }}min • 
+                  Clas: {{ boleto.funcion?.pelicula?.clasificacion || 'N/A' }}
+                </div>
+              </td>
+
+              <!-- Precio -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-medium text-gray-900">
+                  {{ formatearPrecio(boleto.precio_pagado) }}
+                </span>
+                <div class="text-xs text-gray-500">
+                  Base: {{ formatearPrecio(boleto.funcion?.precio_base || 0) }}
+                </div>
+              </td>
+
+              <!-- Métricas de Ventas -->
+              <td class="px-6 py-4">
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-600">Total Vendidos:</span>
+                    <span class="text-sm font-medium text-green-600">
+                      {{ boleto.metricas?.total_vendidos || 0 }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-600">Ingresos:</span>
+                    <span class="text-sm font-medium text-purple-600">
+                      {{ formatearPrecio(boleto.metricas?.ingresos_totales || 0) }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-600">Asistencias:</span>
+                    <span class="text-sm font-medium text-blue-600">
+                      {{ boleto.metricas?.asistencias_confirmadas || 0 }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Fecha Creación -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-medium text-gray-900">
+                  {{ formatearFecha(boleto.fecha_reserva) }}
+                </span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2">
+                  <!-- Ver Detalles -->
+                  <button (click)="verDetallesBoleto(boleto)"
+                    class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                    title="Ver detalles">
+                    <span class="material-icons text-sm">visibility</span>
+                  </button>
+
+                  <!-- Generar QR -->
+                  <button (click)="generarQR(boleto)"
+                    class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors"
+                    title="Ver QR">
+                    <span class="material-icons text-sm">qr_code</span>
+                  </button>
+
+                  <!-- Eliminar -->
+                  <button (click)="eliminarBoleto(boleto.boleto_id)"
+                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                    title="Eliminar boleto">
+                    <span class="material-icons text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div *ngIf="boletosFiltrados.length === 0" class="text-center py-12 px-6">
+          <span class="material-icons text-gray-400 text-6xl mb-4">local_activity</span>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron boletos base</h3>
+          <p class="text-gray-600 mb-6">
+            {{ tieneFiltrosActivos() ?
+            'No hay boletos que coincidan con los filtros aplicados' :
+            'No hay boletos base creados en el sistema' }}
+          </p>
+          <button *ngIf="!tieneFiltrosActivos()" (click)="abrirModalCrearBoleto()"
+            class="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200">
+            <span class="material-icons">add</span>
+            <span>Crear primer boleto</span>
+          </button>
+          <button *ngIf="tieneFiltrosActivos()" (click)="limpiarFiltros()"
+            class="inline-flex items-center space-x-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200">
+            <span class="material-icons">refresh</span>
+            <span>Limpiar filtros</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crear Boleto -->
+  <div *ngIf="mostrarModalCrear" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-900">Crear Nuevo Boleto Base</h3>
       </div>
       
-      <div class="space-y-3">
-        <div class="flex justify-between">
-          <span class="text-gray-600">Película:</span>
-          <span class="font-medium">El Padrino</span>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Seleccionar Función *</label>
+          <select [(ngModel)]="nuevoBoleto.funcion_id" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Selecciona una función</option>
+            <option *ngFor="let funcion of funcionesDisponibles" [value]="funcion.funcion_id">
+              {{ funcion.pelicula?.titulo }} - {{ formatearFecha(funcion.fecha_hora_inicio) }} - {{ funcion.sala?.nombre }}
+            </option>
+          </select>
         </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">Fecha:</span>
-          <span class="font-medium">2025-11-06</span>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-900 mb-2">Precio del Boleto *</label>
+          <input type="number" [(ngModel)]="nuevoBoleto.precio_pagado" step="0.01" min="0"
+            placeholder="0.00"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">Hora:</span>
-          <span class="font-medium">19:30</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">Sala:</span>
-          <span class="font-medium">Sala 4 - F12</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-600">Precio:</span>
-          <span class="font-medium text-green-600">$8.50</span>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div class="flex items-center">
+            <span class="material-icons text-yellow-600 mr-2">info</span>
+            <p class="text-sm text-yellow-800">
+              Este boleto base estará disponible para que los usuarios lo compren en la interfaz de ventas.
+              El sistema generará automáticamente un código QR único.
+            </p>
+          </div>
         </div>
       </div>
-      
-      <div class="mt-4 pt-4 border-t border-gray-300 text-center">
-        <div class="text-xs text-gray-500">ID: #001</div>
-        <div class="text-xs text-gray-500">Estado: Activo</div>
+
+      <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+        <button (click)="cerrarModalCrear()"
+          class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors">
+          Cancelar
+        </button>
+        <button (click)="confirmarCrearBoleto()" 
+          [disabled]="!nuevoBoleto.funcion_id || !nuevoBoleto.precio_pagado"
+          class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors">
+          Crear Boleto
+        </button>
       </div>
     </div>
   </div>
-
-  <!-- Ticket Modal -->
-  <app-ticket-modal 
-    [showModal]="showModal"
-    (modalClosed)="showModal = false"
-    (ticketAdded)="onTicketAdded($event)">
-  </app-ticket-modal>
 </div>

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Boletos } from '../boletos/boletos';
+import { BoletosComponent } from '../boletos/boletos';
 
 // Define the Ticket interface
 export interface Ticket {

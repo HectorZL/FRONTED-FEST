@@ -34,7 +34,7 @@ export const routes: Routes = [
       {
         path: 'boletos',
         loadComponent: () =>
-          import('./demo/dashboard/components/boletos/boletos').then((m) => m.Boletos),
+          import('./demo/dashboard/components/boletos/boletos').then((m) => m.BoletosComponent),
       },
       {
         path: 'salas',
