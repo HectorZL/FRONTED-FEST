@@ -8,16 +8,28 @@ import { PostgrestResponse, RealtimePostgresChangesPayload } from '@supabase/sup
 // ----------------------------------------------------
 // 1. INTERFACE DE LA ENTIDAD (CORREGIDA según las columnas de la tabla)
 // ----------------------------------------------------
+// Interface que representa la estructura en la base de datos
+interface DBPelicula {
+  pelicula_id?: number;
+  titulo: string;
+  sinopsis: string;
+  duracion: number;
+  clasificacion: string;
+  genero: string;
+  url_poster: string;
+  estado: boolean;
+}
+
+// Interface para usar en la aplicación
 export interface Pelicula {
-  // Las columnas de la base de datos
-  pelicula_id: number; // Mapea a pelicula_idnumber
-  titulo: string;       // Mapea a titulostring (Usado para el ordenamiento)
-  descripcion: string;  // Mapea a stringtext
-  duracion: number;     // Mapea a numberinteger
-  director: string;     // Mapea a stringcharacter varying
-  genero: string;       // Mapea a stringcharacter varying
-  poster_url: string;   // Mapea a stringcharacter varying
-  is_active: boolean;   // Mapea a booleanboolean
+  id?: number;
+  titulo: string;
+  sinopsis: string;
+  duracion: number;
+  clasificacion: string;
+  genero: string[];
+  imagenUrl: string;
+  estado: boolean;
 }
 
 @Injectable({
@@ -61,13 +73,23 @@ export class PeliculasService {
       supabase
         .from(this.TABLE_NAME)
         .select('*')
-        .order('titulo', { ascending: true }) // <-- CORRECCIÓN CLAVE
+        .order('titulo', { ascending: true })
     ).pipe(
-      map((response: PostgrestResponse<Pelicula>) => {
+      map((response: PostgrestResponse<DBPelicula>) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
-        return response.data || [];
+        // Mapear los datos de la base de datos al formato de la aplicación
+        return (response.data || []).map(dbPelicula => ({
+          id: dbPelicula.pelicula_id,
+          titulo: dbPelicula.titulo,
+          sinopsis: dbPelicula.sinopsis,
+          duracion: dbPelicula.duracion,
+          clasificacion: dbPelicula.clasificacion,
+          genero: dbPelicula.genero ? dbPelicula.genero.split(',').map(g => g.trim()) : [],
+          imagenUrl: dbPelicula.url_poster || 'assets/images/movie-placeholder.jpg',
+          estado: dbPelicula.estado
+        }));
       })
     );
   }
@@ -76,24 +98,21 @@ export class PeliculasService {
    * Configura la escucha de eventos en TIEMPO REAL.
    */
   private subscribeToRealtimeChanges(): void {
-    
     supabase
       .channel('public:pelicula') 
       .on(
         'postgres_changes', 
         { event: '*', schema: 'public', table: this.TABLE_NAME }, 
-        (payload: RealtimePostgresChangesPayload<Pelicula>) => {
+        (payload: RealtimePostgresChangesPayload<DBPelicula>) => {
         
-        // Corrección de tipado estricto (as Pelicula) para acceder a 'id' de forma segura
-        const newRecord = payload.new as Pelicula;
-        const oldRecord = payload.old as Pelicula;
-
-        // Utilizamos pelicula_id como clave primaria
+        // Obtener el ID de la película afectada
+        const newRecord = payload.new as DBPelicula;
+        const oldRecord = payload.old as DBPelicula;
         const affectedId = newRecord?.pelicula_id ?? oldRecord?.pelicula_id ?? 'N/A';
 
         console.log('Cambio en tiempo real recibido:', payload.eventType, affectedId);
         
-        // Recargar la lista completa después del cambio para mantener la coherencia y el orden
+        // Recargar la lista completa después del cambio
         this.getAllPeliculasREST().subscribe(
           updatedList => {
             this.currentPeliculas = updatedList;
@@ -110,5 +129,46 @@ export class PeliculasService {
    */
   getListaPeliculas(): Observable<Pelicula[]> {
     return this.peliculas$;
+  }
+
+  agregarPelicula(pelicula: Omit<Pelicula, 'id'>): Observable<Pelicula> {
+    // Mapear los datos al formato de la base de datos
+    const peliculaData: DBPelicula = {
+      titulo: pelicula.titulo,
+      sinopsis: pelicula.sinopsis,
+      duracion: pelicula.duracion,
+      clasificacion: pelicula.clasificacion,
+      genero: Array.isArray(pelicula.genero) ? pelicula.genero.join(', ') : pelicula.genero,
+      url_poster: pelicula.imagenUrl,
+      estado: pelicula.estado !== undefined ? pelicula.estado : true
+    };
+
+    return from(
+      supabase
+        .from(this.TABLE_NAME)
+        .insert([peliculaData])
+        .select()
+    ).pipe(
+      map((response: PostgrestResponse<DBPelicula>) => {
+        if (response.error) {
+          throw new Error(`Error al agregar película: ${response.error.message}`);
+        }
+        const dbPelicula = response.data?.[0];
+        if (!dbPelicula) {
+          throw new Error('No se recibieron datos de la película guardada');
+        }
+        // Mapear la respuesta al formato de la aplicación
+        return {
+          id: dbPelicula.pelicula_id,
+          titulo: dbPelicula.titulo,
+          sinopsis: dbPelicula.sinopsis,
+          duracion: dbPelicula.duracion,
+          clasificacion: dbPelicula.clasificacion,
+          genero: dbPelicula.genero ? dbPelicula.genero.split(',').map(g => g.trim()) : [],
+          imagenUrl: dbPelicula.url_poster || 'assets/images/movie-placeholder.jpg',
+          estado: dbPelicula.estado
+        };
+      })
+    );
   }
 }

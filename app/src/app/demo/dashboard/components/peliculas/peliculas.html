@@ -112,23 +112,27 @@
                 />
               </td>
 
-              <!-- Título y Sinopsis -->
+              <!-- Título -->
               <td class="px-6 py-4">
                 <div class="max-w-xs">
-                  <h3 class="text-sm font-semibold text-gray-900 mb-1">{{ pelicula.titulo }}</h3>
-                  <p class="text-sm text-gray-600 line-clamp-2">{{ pelicula.sinopsis }}</p>
+                  <h3 class="text-sm font-semibold text-gray-900">{{ pelicula.titulo }}</h3>
                 </div>
               </td>
 
               <!-- Géneros -->
               <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-1 max-w-xs">
-                  <span
-                    *ngFor="let genero of pelicula.genero"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-                  >
-                    {{ genero }}
-                  </span>
+                  <ng-container *ngIf="pelicula.genero && pelicula.genero.length > 0; else noGenero">
+                    <span
+                      *ngFor="let genero of pelicula.genero"
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                    >
+                      {{ genero }}
+                    </span>
+                  </ng-container>
+                  <ng-template #noGenero>
+                    <span class="text-sm text-gray-500">Sin géneros</span>
+                  </ng-template>
                 </div>
               </td>
 
@@ -183,9 +187,10 @@
 
                   <!-- Eliminar -->
                   <button
-                    (click)="eliminarPelicula(pelicula.id)"
+                    (click)="pelicula.id && eliminarPelicula(pelicula.id)"
                     class="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors duration-200"
                     title="Eliminar"
+                    [disabled]="!pelicula.id"
                   >
                     <span class="material-icons text-lg">delete</span>
                   </button>
@@ -198,6 +203,8 @@
         <!-- Empty State -->
         <div *ngIf="peliculasFiltradas.length === 0" class="text-center py-12 px-6">
           <span class="material-icons text-gray-400 text-6xl mb-4">movie_filter</span>
+          <p class="text-gray-600 text-lg font-medium">No hay películas para mostrar</p>
+          <p class="text-gray-500 mt-2">Haz clic en "Agregar Película" para comenzar</p>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron películas</h3>
           <p class="text-gray-600 mb-6">No hay películas que coincidan con tu búsqueda.</p>
           <button
@@ -215,8 +222,8 @@
   <!-- Modal Component -->
   <app-modal-pelicula
     [mostrar]="mostrarModal"
+    [pelicula]="pelicula"
     (cerrar)="cerrarModal()"
-    (guardar)="onPeliculaGuardada($event)"
-  >
+    (guardar)="onPeliculaGuardada($event)">
   </app-modal-pelicula>
 </div>

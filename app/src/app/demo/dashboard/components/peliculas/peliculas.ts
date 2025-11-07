@@ -1,18 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Modal } from '../../util/modal/modal';
+import { PeliculasService, Pelicula } from '../../../services/peliculas.service';
+import { Modal, PeliculaForm } from '../../util/modal/modal';
+import { Subscription } from 'rxjs';
 
-interface Pelicula {
-  id: number;
-  titulo: string;
-  sinopsis: string;
-  duracion: number;
-  clasificacion: string;
-  genero: string[];
-  imagenUrl: string;
-  estado: boolean;
-}
+// Local interface for the form data
+export interface PeliculaFormData extends Omit<Pelicula, 'id'> {}
+
+// Local interface for the UI
+type PeliculaUI = Pelicula;
 
 @Component({
   selector: 'app-peliculas',
@@ -22,82 +19,126 @@ interface Pelicula {
   styleUrls: ['./peliculas.scss']
 })
 
-export class Peliculas{
+export class Peliculas implements OnInit, OnDestroy {
   mostrarModal = false;
-  peliculas: Pelicula[] = [
-    {
-      id: 1,
-      titulo: 'El Origen',
-      sinopsis: 'Un ladrón que roba secretos corporativos mediante el uso de tecnología de sueños compartidos.',
-      duracion: 148,
-      clasificacion: 'PG-13',
-      genero: ['Ciencia Ficción', 'Acción'],
-      imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
-      estado: true
-    },
-    {
-      id: 2,
-      titulo: 'El Padrino',
-      sinopsis: 'La historia de una familia de la mafia italiana y su lucha por mantener el poder en el crimen organizado.',
-      duracion: 175,
-      clasificacion: 'R',
-      genero: ['Drama', 'Crimen'],
-      imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
-      estado: true
-    },
-    {
-      id: 3,
-      titulo: 'Interestelar',
-      sinopsis: 'Un grupo de exploradores viaja a través de un agujero de gusano en el espacio en un intento por asegurar la supervivencia de la humanidad.',
-      duracion: 169,
-      clasificacion: 'PG-13',
-      genero: ['Ciencia Ficción', 'Aventura', 'Drama'],
-      imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
-      estado: false
-    }
-  ];
-
+  peliculas: PeliculaUI[] = [];
   filtroBusqueda: string = '';
+  
+  // Current movie being edited
+  pelicula: PeliculaUI | null = null;
+  
+  private peliculasSubscription: Subscription | null = null;
+  
+  constructor(private peliculasService: PeliculasService) {}
+  
+  ngOnInit() {
+    this.cargarPeliculas();
+  }
+  
+  ngOnDestroy() {
+    if (this.peliculasSubscription) {
+      this.peliculasSubscription.unsubscribe();
+    }
+  }
+  
+  private cargarPeliculas() {
+    this.peliculasSubscription = this.peliculasService.getListaPeliculas().subscribe({
+      next: (peliculas: Pelicula[]) => {
+        this.peliculas = peliculas;
+      },
+      error: (error) => {
+        console.error('Error al cargar películas:', error);
+      }
+    });
+  }
 
-  abrirModal() {
+  abrirModal(pelicula?: PeliculaUI) {
+    if (pelicula) {
+      // Edit mode
+      this.pelicula = { ...pelicula };
+    } else {
+      // Add mode
+      this.pelicula = {
+        titulo: '',
+        sinopsis: '',
+        duracion: 0,
+        clasificacion: '',
+        genero: [],
+        imagenUrl: 'https://images.unsplash.com/photo-1489599809505-7c8e1a43cc32?w=400',
+        estado: true
+      };
+    }
     this.mostrarModal = true;
   }
 
   cerrarModal() {
     this.mostrarModal = false;
+    this.pelicula = null;
   }
 
-  onPeliculaGuardada(nuevaPelicula: Omit<Pelicula, 'id'>) {
-    const pelicula: Pelicula = {
-      ...nuevaPelicula,
-      id: this.peliculas.length + 1
+  onPeliculaGuardada(peliculaForm: PeliculaForm) {
+    const peliculaData: PeliculaFormData = {
+      titulo: peliculaForm.titulo,
+      sinopsis: peliculaForm.sinopsis,
+      duracion: peliculaForm.duracion || 0,
+      clasificacion: peliculaForm.clasificacion,
+      genero: peliculaForm.genero,
+      imagenUrl: peliculaForm.imagenUrl,
+      estado: peliculaForm.estado
     };
-    this.peliculas.push(pelicula);
-    this.cerrarModal();
+
+    if (this.pelicula?.id) {
+      // Update existing movie
+      // TODO: Implement update in the service
+      console.log('Updating movie:', peliculaData);
+    } else {
+      // Add new movie
+      this.peliculasService.agregarPelicula(peliculaData).subscribe({
+        next: (peliculaCreada) => {
+          this.peliculas = [...this.peliculas, peliculaCreada];
+          this.cerrarModal();
+        },
+        error: (error) => {
+          console.error('Error al guardar la película:', error);
+        }
+      });
+    }
   }
 
-  toggleEstado(pelicula: Pelicula) {
+  toggleEstado(pelicula: PeliculaUI) {
+    // TODO: Implement status toggle in the service
     pelicula.estado = !pelicula.estado;
+    console.log('Cambiando estado de la película:', pelicula);
+  }
+
+  editarPelicula(pelicula: PeliculaUI) {
+    this.abrirModal(pelicula);
   }
 
   eliminarPelicula(id: number) {
-    this.peliculas = this.peliculas.filter(p => p.id !== id);
+    // TODO: Implement delete in the service
+    if (confirm('¿Estás seguro de eliminar esta película?')) {
+      this.peliculas = this.peliculas.filter(p => p.id !== id);
+    }
   }
 
   get peliculasFiltradas() {
     if (!this.filtroBusqueda) {
       return this.peliculas;
     }
+    const busqueda = this.filtroBusqueda.toLowerCase();
     return this.peliculas.filter(pelicula =>
-      pelicula.titulo.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) ||
-      pelicula.genero.some(g => g.toLowerCase().includes(this.filtroBusqueda.toLowerCase())) ||
-      pelicula.clasificacion.toLowerCase().includes(this.filtroBusqueda.toLowerCase())
+      pelicula.titulo.toLowerCase().includes(busqueda) ||
+      pelicula.genero.some(g => g.toLowerCase().includes(busqueda)) ||
+      pelicula.clasificacion.toLowerCase().includes(busqueda) ||
+      pelicula.sinopsis.toLowerCase().includes(busqueda)
     );
   }
 
   formatearDuracion(minutos: number): string {
     const horas = Math.floor(minutos / 60);
     const mins = minutos % 60;
+    return `${horas}h ${mins.toString().padStart(2, '0')}m`;
     return `${horas}h ${mins}m`;
   }
 }
