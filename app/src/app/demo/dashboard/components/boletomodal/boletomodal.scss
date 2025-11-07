@@ -1,26 +1,65 @@
-:host {
-  display: contents;
+/* Animaciones mejoradas para el modal */
+.modal-overlay {
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(8px) !important; /* Fondo translúcido permanente */
+  background: rgba(255, 255, 255, 0.1) !important; /* Fondo transparente permanente */
 }
 
-/* Animaciones suaves para el modal */
-.modal-enter {
-  opacity: 0;
-  transform: scale(0.95);
+.modal-container {
+  animation: slideIn 0.3s ease-out;
 }
 
-.modal-enter-active {
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 300ms, transform 300ms;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.modal-exit {
-  opacity: 1;
-  transform: scale(1);
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-.modal-exit-active {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 300ms, transform 300ms;
+/* Mejoras para los inputs en estado focus */
+.form-input:focus, .form-select:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Efectos hover mejorados */
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn:hover {
+  transform: rotate(90deg);
+}
+
+/* Asegurar que el contenido del modal tenga mejor contraste */
+.modal-container {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Mejorar la legibilidad del texto dentro del modal */
+.modal-header,
+.modal-content,
+.modal-footer {
+  background: transparent !important;
 }
