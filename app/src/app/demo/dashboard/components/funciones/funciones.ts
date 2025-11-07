@@ -1,32 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Funcion {
-  id: number;
-  peliculaId: number;
-  salaId: number;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-  precioBase: number;
-  estado: 'activa' | 'cancelada' | 'completa';
-}
-
-interface Pelicula {
-  id: number;
-  titulo: string;
-  duracion: number;
-  clasificacion: string;
-  estado: boolean;
-}
-
-interface Sala {
-  id: number;
-  nombre: string;
-  tipo: string;
-  estado: boolean;
-}
+import { Subscription } from 'rxjs';
+import { FuncionesService, Funcion, FuncionCompleta } from '../../../services/funcion.service'
+import { PeliculasService, Pelicula } from '../../../services/peliculas.service';
+import { SalasService, Sala } from '../../../services/salas.service';
 
 @Component({
   selector: 'app-funciones',
@@ -34,96 +12,142 @@ interface Sala {
   imports: [CommonModule, FormsModule],
   templateUrl: './funciones.html'
 })
-export class Funciones {
+export class Funciones implements OnInit, OnDestroy {
   mostrarModal = false;
-  funcionEditando: Funcion | null = null;
+  funcionEditando: FuncionCompleta | null = null;
+  cargando = false;
+  guardando = false;
+  private subscriptions: Subscription = new Subscription();
 
-  // Datos de ejemplo
-  peliculas: Pelicula[] = [
-    { id: 1, titulo: 'El Origen', duracion: 148, clasificacion: 'PG-13', estado: true },
-    { id: 2, titulo: 'El Padrino', duracion: 175, clasificacion: 'R', estado: true },
-    { id: 3, titulo: 'Interestelar', duracion: 169, clasificacion: 'PG-13', estado: true },
-    { id: 4, titulo: 'El Señor de los Anillos', duracion: 178, clasificacion: 'PG-13', estado: false }
-  ];
+  funciones: FuncionCompleta[] = [];
+  funcionesFiltradas: FuncionCompleta[] = [];
+  peliculas: Pelicula[] = [];
+  salas: Sala[] = [];
 
-  salas: Sala[] = [
-    { id: 1, nombre: 'Sala Premier 1', tipo: '3D', estado: true },
-    { id: 2, nombre: 'Sala IMAX', tipo: 'IMAX', estado: true },
-    { id: 3, nombre: 'Sala 4DX', tipo: '4DX', estado: false },
-    { id: 4, nombre: 'Sala Standard 1', tipo: '2D', estado: true }
-  ];
+  // Filtros
+  filtroFecha: string = '';
+  filtroSalaId: number | null = null;
+  filtroEstado: string = 'todos';
+  filtroPeliculaId: number | null = null;
 
-  funciones: Funcion[] = [
-    { id: 1, peliculaId: 1, salaId: 1, fecha: '2024-01-15', horaInicio: '14:00', horaFin: '16:28', precioBase: 8.50, estado: 'activa' },
-    { id: 2, peliculaId: 2, salaId: 2, fecha: '2024-01-15', horaInicio: '17:00', horaFin: '19:55', precioBase: 12.00, estado: 'activa' },
-    { id: 3, peliculaId: 3, salaId: 1, fecha: '2024-01-15', horaInicio: '20:30', horaFin: '23:19', precioBase: 9.00, estado: 'completa' },
-    { id: 4, peliculaId: 1, salaId: 3, fecha: '2024-01-16', horaInicio: '15:00', horaFin: '17:28', precioBase: 15.00, estado: 'cancelada' }
-  ];
+  estadosFuncion: ('programada' | 'en_curso' | 'cancelada' | 'finalizada')[] = ['programada', 'en_curso', 'cancelada', 'finalizada'];
 
-  estadosFuncion: ('activa' | 'cancelada' | 'completa')[] = ['activa', 'cancelada', 'completa'];
-  
-  nuevaFuncion: Omit<Funcion, 'id'> = {
-    peliculaId: 0,
-    salaId: 0,
-    fecha: this.getFechaHoy(),
-    horaInicio: '14:00',
-    horaFin: '16:00',
-    precioBase: 8.00,
-    estado: 'activa'
+  nuevaFuncion: Omit<Funcion, 'funcion_id'> = {
+    pelicula_id: 0,
+    sala_id: 0,
+    fecha_hora_inicio: '',
+    fecha_hora_fin: '',
+    precio_base: 8.00,
+    estado: 'programada'
   };
 
-  filtroFecha: string = '';
-  filtroSala: number = 0;
-  filtroEstado: string = '';
+  // Para el formulario
+  fechaSeleccionada: string = this.getFechaHoy();
+  horaInicioSeleccionada: string = '14:00';
 
-  // MÉTODOS NUEVOS PARA FILTRAR
-  getSalasActivas(): Sala[] {
-    return this.salas.filter(sala => sala.estado);
+  constructor(
+    private funcionesService: FuncionesService,
+    private peliculasService: PeliculasService,
+    private salasService: SalasService
+  ) { }
+
+  ngOnInit() {
+    this.cargarDatos();
   }
 
-  getPeliculasActivas(): Pelicula[] {
-    return this.peliculas.filter(pelicula => pelicula.estado);
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
   }
 
-  // Resto de los métodos existentes...
-  getFuncionesFiltradas() {
-    let funcionesFiltradas = this.funciones;
+  cargarDatos() {
+    this.cargando = true;
 
-    if (this.filtroFecha) {
-      funcionesFiltradas = funcionesFiltradas.filter(f => f.fecha === this.filtroFecha);
-    }
+    // Cargar datos en paralelo
+    this.subscriptions.add(
+      this.peliculasService.getListaPeliculas().subscribe({
+        next: (peliculas) => {
+          this.peliculas = peliculas;
+        },
+        error: (error) => {
+          console.error('Error al cargar películas:', error);
+        }
+      })
+    );
 
-    if (this.filtroSala) {
-      funcionesFiltradas = funcionesFiltradas.filter(f => f.salaId === this.filtroSala);
-    }
+    this.subscriptions.add(
+      this.salasService.getListaSalas().subscribe({
+        next: (salas) => {
+          this.salas = salas;
+        },
+        error: (error) => {
+          console.error('Error al cargar salas:', error);
+        }
+      })
+    );
 
-    if (this.filtroEstado) {
-      funcionesFiltradas = funcionesFiltradas.filter(f => f.estado === this.filtroEstado);
-    }
-
-    return funcionesFiltradas;
+    // Suscribirse a funciones
+    this.suscribirAFunciones();
   }
 
-  getNombrePelicula(peliculaId: number): string {
-    const pelicula = this.peliculas.find(p => p.id === peliculaId);
-    return pelicula ? pelicula.titulo : 'Película no encontrada';
+  suscribirAFunciones() {
+    this.subscriptions.add(
+      this.funcionesService.funciones$.subscribe({
+        next: (funciones) => {
+          this.cargarFuncionesCompletas();
+        },
+        error: (error) => {
+          console.error('Error en suscripción a funciones:', error);
+        }
+      })
+    );
   }
 
-  getNombreSala(salaId: number): string {
-    const sala = this.salas.find(s => s.id === salaId);
-    return sala ? sala.nombre : 'Sala no encontrada';
+  cargarFuncionesCompletas() {
+    this.subscriptions.add(
+      this.funcionesService.getFuncionesCompletas().subscribe({
+        next: (funciones) => {
+          this.funciones = funciones;
+          this.aplicarFiltros();
+          this.cargando = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar funciones completas:', error);
+          this.cargando = false;
+          alert('Error al cargar las funciones: ' + error.message);
+        }
+      })
+    );
   }
 
-  getDuracionPelicula(peliculaId: number): number {
-    const pelicula = this.peliculas.find(p => p.id === peliculaId);
-    return pelicula ? pelicula.duracion : 0;
+  aplicarFiltros() {
+    this.funcionesFiltradas = this.funciones.filter(funcion => {
+      const coincideFecha = this.filtroFecha ?
+        funcion.fecha_hora_inicio.startsWith(this.filtroFecha) : true;
+
+      const coincideSala = this.filtroSalaId !== null ?
+        funcion.sala_id === this.filtroSalaId : true;
+
+      const coincideEstado = this.filtroEstado !== 'todos' ?
+        funcion.estado === this.filtroEstado : true;
+
+      const coincidePelicula = this.filtroPeliculaId !== null ?
+        funcion.pelicula_id === this.filtroPeliculaId : true;
+
+      return coincideFecha && coincideSala && coincideEstado && coincidePelicula;
+    });
   }
 
+  onFiltroChange() {
+    this.aplicarFiltros();
+  }
+
+  // Métodos auxiliares
   getColorEstado(estado: string): string {
     const colores: { [key: string]: string } = {
-      'activa': 'bg-green-100 text-green-800',
+      'programada': 'bg-blue-100 text-blue-800',
+      'en_curso': 'bg-green-100 text-green-800',
       'cancelada': 'bg-red-100 text-red-800',
-      'completa': 'bg-blue-100 text-blue-800'
+      'finalizada': 'bg-gray-100 text-gray-800'
     };
     return colores[estado] || 'bg-gray-100 text-gray-800';
   }
@@ -132,92 +156,162 @@ export class Funciones {
     return new Date().toISOString().split('T')[0];
   }
 
+  formatearFecha(fechaISO: string): string {
+    return new Date(fechaISO).toLocaleDateString('es-ES');
+  }
+
+  formatearHora(fechaISO: string): string {
+    return new Date(fechaISO).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
   calcularHoraFin(): void {
-    if (this.nuevaFuncion.peliculaId && this.nuevaFuncion.horaInicio) {
-      const duracion = this.getDuracionPelicula(this.nuevaFuncion.peliculaId);
-      const [horas, minutos] = this.nuevaFuncion.horaInicio.split(':').map(Number);
-      
-      let totalMinutos = horas * 60 + minutos + duracion;
-      let nuevasHoras = Math.floor(totalMinutos / 60);
-      let nuevosMinutos = totalMinutos % 60;
-      
-      if (nuevasHoras >= 24) {
-        nuevasHoras -= 24;
+    if (this.nuevaFuncion.pelicula_id && this.fechaSeleccionada && this.horaInicioSeleccionada) {
+      const pelicula = this.peliculas.find(p => p.id === this.nuevaFuncion.pelicula_id);
+      if (pelicula) {
+        const inicio = new Date(`${this.fechaSeleccionada}T${this.horaInicioSeleccionada}`);
+        const fin = new Date(inicio.getTime() + pelicula.duracion * 60000);
+  
+        this.nuevaFuncion.fecha_hora_inicio = inicio.toISOString();
+        this.nuevaFuncion.fecha_hora_fin = fin.toISOString();
       }
-      
-      this.nuevaFuncion.horaFin = 
-        `${nuevasHoras.toString().padStart(2, '0')}:${nuevosMinutos.toString().padStart(2, '0')}`;
     }
   }
 
-  abrirModal(funcion?: Funcion) {
+  // Método para obtener cantidad de funciones por estado
+  getCantidadFuncionesPorEstado(estado: string): number {
+    return this.funciones.filter(f => f.estado === estado).length;
+  }
+
+  // CRUD Operations
+  abrirModal(funcion?: FuncionCompleta) {
     if (funcion) {
       this.funcionEditando = { ...funcion };
       this.nuevaFuncion = {
-        peliculaId: funcion.peliculaId,
-        salaId: funcion.salaId,
-        fecha: funcion.fecha,
-        horaInicio: funcion.horaInicio,
-        horaFin: funcion.horaFin,
-        precioBase: funcion.precioBase,
+        pelicula_id: funcion.pelicula_id,
+        sala_id: funcion.sala_id,
+        fecha_hora_inicio: funcion.fecha_hora_inicio,
+        fecha_hora_fin: funcion.fecha_hora_fin,
+        precio_base: funcion.precio_base,
         estado: funcion.estado
       };
+
+      // Establecer valores para el formulario
+      const inicio = new Date(funcion.fecha_hora_inicio);
+      this.fechaSeleccionada = inicio.toISOString().split('T')[0];
+      this.horaInicioSeleccionada = inicio.toTimeString().slice(0, 5);
     } else {
       this.funcionEditando = null;
       this.nuevaFuncion = {
-        peliculaId: 0,
-        salaId: 0,
-        fecha: this.getFechaHoy(),
-        horaInicio: '14:00',
-        horaFin: '16:00',
-        precioBase: 8.00,
-        estado: 'activa'
+        pelicula_id: 0,
+        sala_id: 0,
+        fecha_hora_inicio: '',
+        fecha_hora_fin: '',
+        precio_base: 8.00,
+        estado: 'programada'
       };
+      this.fechaSeleccionada = this.getFechaHoy();
+      this.horaInicioSeleccionada = '14:00';
     }
     this.mostrarModal = true;
+    this.guardando = false;
   }
 
   cerrarModal() {
     this.mostrarModal = false;
     this.funcionEditando = null;
+    this.guardando = false;
   }
 
   guardarFuncion() {
-    if (this.validarFuncion()) {
-      if (this.funcionEditando) {
-        const index = this.funciones.findIndex(f => f.id === this.funcionEditando!.id);
-        if (index !== -1) {
-          this.funciones[index] = {
-            ...this.funcionEditando,
-            ...this.nuevaFuncion
-          };
-        }
-      } else {
-        const nuevaFuncionCompleta: Funcion = {
-          id: Math.max(...this.funciones.map(f => f.id), 0) + 1,
-          ...this.nuevaFuncion
-        };
-        this.funciones.push(nuevaFuncionCompleta);
-      }
-      this.cerrarModal();
+    if (!this.validarFuncion()) {
+      alert('Por favor, completa todos los campos requeridos');
+      return;
+    }
+
+    // Calcular fechas antes de guardar
+    this.calcularHoraFin();
+
+    this.guardando = true;
+
+    if (this.funcionEditando) {
+      // Actualizar función existente
+      this.subscriptions.add(
+        this.funcionesService.updateFuncion(this.funcionEditando.funcion_id, this.nuevaFuncion).subscribe({
+          next: (funcionActualizada) => {
+            console.log('Función actualizada:', funcionActualizada);
+            this.cerrarModal();
+          },
+          error: (error) => {
+            console.error('Error al actualizar función:', error);
+            alert('Error al actualizar la función: ' + error.message);
+            this.guardando = false;
+          }
+        })
+      );
+    } else {
+      // Crear nueva función
+      this.subscriptions.add(
+        this.funcionesService.createFuncion(this.nuevaFuncion).subscribe({
+          next: (nuevaFuncion) => {
+            console.log('Función creada:', nuevaFuncion);
+            this.cerrarModal();
+          },
+          error: (error) => {
+            console.error('Error al crear función:', error);
+            alert('Error al crear la función: ' + error.message);
+            this.guardando = false;
+          }
+        })
+      );
     }
   }
 
   validarFuncion(): boolean {
-    return !!(this.nuevaFuncion.peliculaId && 
-              this.nuevaFuncion.salaId && 
-              this.nuevaFuncion.fecha && 
-              this.nuevaFuncion.horaInicio && 
-              this.nuevaFuncion.horaFin && 
-              this.nuevaFuncion.precioBase > 0);
+    return !!(this.nuevaFuncion.pelicula_id &&
+      this.nuevaFuncion.sala_id &&
+      this.fechaSeleccionada &&
+      this.horaInicioSeleccionada &&
+      this.nuevaFuncion.precio_base > 0);
   }
 
   eliminarFuncion(id: number) {
-    this.funciones = this.funciones.filter(f => f.id !== id);
+    if (confirm('¿Estás seguro de que quieres eliminar esta función? Esta acción no se puede deshacer.')) {
+      this.subscriptions.add(
+        this.funcionesService.deleteFuncion(id).subscribe({
+          next: () => {
+            console.log('Función eliminada correctamente');
+          },
+          error: (error) => {
+            console.error('Error al eliminar función:', error);
+            alert('Error al eliminar la función: ' + error.message);
+          }
+        })
+      );
+    }
   }
 
-  cambiarEstadoFuncion(funcion: Funcion, nuevoEstado: 'activa' | 'cancelada' | 'completa') {
+  cambiarEstadoFuncion(funcion: FuncionCompleta, nuevoEstado: 'programada' | 'en_curso' | 'cancelada' | 'finalizada') {
+    const estadoOriginal = funcion.estado;
+
+    // Optimistic update
     funcion.estado = nuevoEstado;
+
+    this.subscriptions.add(
+      this.funcionesService.cambiarEstadoFuncion(funcion.funcion_id, nuevoEstado).subscribe({
+        next: (funcionActualizada) => {
+          console.log('Estado de función actualizado:', funcionActualizada);
+        },
+        error: (error) => {
+          console.error('Error al cambiar estado de la función:', error);
+          // Revertir el cambio si hay error
+          funcion.estado = estadoOriginal;
+          alert('Error al cambiar el estado de la función: ' + error.message);
+        }
+      })
+    );
   }
 
   getHorasDisponibles(): string[] {
@@ -231,25 +325,47 @@ export class Funciones {
   }
 
   tieneConflictosHorarios(): boolean {
-    if (!this.nuevaFuncion.salaId || !this.nuevaFuncion.fecha || !this.nuevaFuncion.horaInicio || !this.nuevaFuncion.horaFin) {
+    if (!this.nuevaFuncion.sala_id || !this.fechaSeleccionada || !this.horaInicioSeleccionada) {
       return false;
     }
+  
+    const inicio = new Date(`${this.fechaSeleccionada}T${this.horaInicioSeleccionada}`);
+    const fin = new Date(inicio.getTime() + (this.peliculas.find(p => p.id === this.nuevaFuncion.pelicula_id)?.duracion || 120) * 60000);
+  
+    const funcionIdExcluir = this.funcionEditando?.funcion_id;
+  
+    // Por ahora retornamos false, pero puedes implementar la verificación real
+    return false;
+  }
 
-    const funcionEditId = this.funcionEditando?.id;
-    const funcionesMismaSala = this.funciones.filter(f => 
-      f.salaId === this.nuevaFuncion.salaId && 
-      f.fecha === this.nuevaFuncion.fecha &&
-      f.id !== funcionEditId
-    );
+  // Limpiar filtros
+  limpiarFiltros() {
+    this.filtroFecha = '';
+    this.filtroSalaId = null;
+    this.filtroEstado = 'todos';
+    this.filtroPeliculaId = null;
+    this.aplicarFiltros();
+  }
 
-    const inicioNueva = new Date(`${this.nuevaFuncion.fecha}T${this.nuevaFuncion.horaInicio}`);
-    const finNueva = new Date(`${this.nuevaFuncion.fecha}T${this.nuevaFuncion.horaFin}`);
+  // Obtener películas activas
+  getPeliculasActivas(): Pelicula[] {
+    return this.peliculas.filter(p => p.estado === true);
+  }
 
-    return funcionesMismaSala.some(funcion => {
-      const inicioExistente = new Date(`${funcion.fecha}T${funcion.horaInicio}`);
-      const finExistente = new Date(`${funcion.fecha}T${funcion.horaFin}`);
+  // Obtener salas activas
+  getSalasActivas(): Sala[] {
+    return this.salas.filter(s => s.estado);
+  }
 
-      return (inicioNueva < finExistente && finNueva > inicioExistente);
-    });
+  // Método para obtener nombre de sala
+  getNombreSala(salaId: number): string {
+    const sala = this.salas.find(s => s.sala_id === salaId);
+    return sala?.nombre || 'Sala no encontrada';
+  }
+
+  // Método para obtener título de película
+  getTituloPelicula(peliculaId: number): string {
+    const pelicula = this.peliculas.find(p => p.id === peliculaId);
+    return pelicula?.titulo || 'Película no encontrada';
   }
 }
