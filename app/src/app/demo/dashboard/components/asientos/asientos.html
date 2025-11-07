@@ -1,67 +1,161 @@
 <div class="min-h-full bg-gray-50">
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-6 rounded-xl mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex-1">
-          <h1 class="text-3xl font-bold text-gray-900">Gestión de Asientos</h1>
-          <p class="text-gray-600 mt-2">Administra la distribución y estado de los asientos por sala</p>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex-1">
+            <h1 class="text-3xl font-bold text-gray-900">Gestión de Asientos</h1>
+            <p class="text-gray-600 mt-2">Administra la distribución y estado de los asientos por sala</p>
+          </div>
+          
+          <!-- Botón Agregar -->
+          <button 
+            (click)="abrirModal()"
+            class="mt-4 sm:mt-0 flex items-center space-x-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl transition-all duration-200 hover:shadow-2xl transform hover:-translate-y-1 text-lg">
+            <span class="material-icons text-xl">add</span>
+            <span>Agregar Asiento</span>
+          </button>
         </div>
-        
-        <!-- Botón Agregar -->
-        <button 
-          (click)="abrirModal()"
-          class="mt-4 sm:mt-0 flex items-center space-x-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl transition-all duration-200 hover:shadow-2xl transform hover:-translate-y-1 text-lg">
-          <span class="material-icons text-xl">add</span>
-          <span>Agregar Asiento</span>
-        </button>
       </div>
-    </div>
+  
+    <!-- Loading State -->
+    <div *ngIf="cargando" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
   
     <!-- Filtros y Búsqueda -->
-    <div class="px-6 mb-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Filtro por Sala -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Filtrar por Sala</label>
-            <select 
-              [(ngModel)]="salaSeleccionada"
-              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-              <option [value]="0">Todas las salas</option>
-              <option *ngFor="let sala of salas" [value]="sala.id">
-                {{ sala.nombre }} ({{ sala.tipo }})
-              </option>
-            </select>
-          </div>
-  
-          <!-- Búsqueda -->
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Buscar asientos</label>
-            <div class="relative">
-              <span class="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
-              <input 
-                type="text" 
-                [(ngModel)]="filtroBusqueda"
-                class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                placeholder="Buscar por fila, número, tipo o estado...">
+    <div *ngIf="!cargando" class="px-6 mb-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Filtros y Búsqueda</h3>
+            <div class="flex items-center space-x-2">
+              <!-- Botón debug (opcional, puedes removerlo después) -->
+              <button 
+                (click)="debugFiltroSala()"
+                class="flex items-center space-x-2 px-3 py-1 text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg transition-colors">
+                <span class="material-icons text-xs">bug_report</span>
+                <span>Debug</span>
+              </button>
+              <button 
+                (click)="limpiarFiltros()"
+                class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                <span class="material-icons text-sm">refresh</span>
+                <span>Limpiar filtros</span>
+              </button>
             </div>
           </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Filtro por Sala - CORREGIDO -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Sala</label>
+              <select 
+                [(ngModel)]="filtroSalaId"
+                (ngModelChange)="onFiltroChange()"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                <option [ngValue]="null">Todas las salas</option>
+                <option *ngFor="let sala of salas" [ngValue]="sala.sala_id">
+                  {{ sala.nombre }} ({{ sala.tipo_sala || '2D' }})
+                </option>
+              </select>
+            </div>
+    
+            <!-- Filtro por Estado -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Estado</label>
+              <select 
+                [(ngModel)]="filtroEstado"
+                (ngModelChange)="onFiltroChange()"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                <option value="todos">Todos los estados</option>
+                <option *ngFor="let estado of estadosAsiento" [value]="estado">
+                  {{ estado | titlecase }}
+                </option>
+              </select>
+            </div>
+    
+            <!-- Filtro por Tipo -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Tipo</label>
+              <select 
+                [(ngModel)]="filtroTipo"
+                (ngModelChange)="onFiltroChange()"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                <option value="todos">Todos los tipos</option>
+                <option *ngFor="let tipo of tiposAsiento" [value]="tipo">
+                  {{ tipo | titlecase }}
+                </option>
+              </select>
+            </div>
+    
+            <!-- Búsqueda -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Buscar</label>
+              <div class="relative">
+                <span class="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
+                <input 
+                  type="text" 
+                  [(ngModel)]="filtroBusqueda"
+                  (ngModelChange)="onFiltroChange()"
+                  class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="Fila, número, tipo...">
+              </div>
+            </div>
+          </div>
+    
+          <!-- Estado actual de filtros (para debug) -->
+          <div class="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+            <div>Filtro activo: 
+              <span *ngIf="filtroSalaId !== null" class="font-medium">Sala ID: {{filtroSalaId}}</span>
+              <span *ngIf="filtroEstado !== 'todos'" class="font-medium ml-2">Estado: {{filtroEstado}}</span>
+              <span *ngIf="filtroTipo !== 'todos'" class="font-medium ml-2">Tipo: {{filtroTipo}}</span>
+              <span *ngIf="filtroBusqueda" class="font-medium ml-2">Búsqueda: "{{filtroBusqueda}}"</span>
+              <span *ngIf="filtroSalaId === null && filtroEstado === 'todos' && filtroTipo === 'todos' && !filtroBusqueda" class="text-gray-400">Sin filtros activos</span>
+            </div>
+            <div>Mostrando {{asientosFiltrados.length}} de {{asientos.length}} asientos</div>
+          </div>
+        </div>
+      </div>
+    
+  
+    <!-- Estadísticas Rápidas -->
+    <div *ngIf="!cargando && asientos.length > 0" class="px-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+          <div class="text-2xl font-bold text-blue-600">{{ totalAsientos }}</div>
+          <div class="text-sm text-gray-600">Total Asientos</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+          <div class="text-2xl font-bold text-green-600">{{ asientosDisponibles }}</div>
+          <div class="text-sm text-gray-600">Disponibles</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+          <div class="text-2xl font-bold text-red-600">{{ asientosOcupados }}</div>
+          <div class="text-sm text-gray-600">Ocupados</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+          <div class="text-2xl font-bold text-orange-600">{{ asientosMantenimiento }}</div>
+          <div class="text-sm text-gray-600">Mantenimiento</div>
         </div>
       </div>
     </div>
   
     <!-- Tabla de Asientos -->
-    <div class="px-6">
+    <div *ngIf="!cargando" class="px-6">
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <!-- Table Header -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h2 class="flex items-center space-x-3 text-xl font-semibold text-gray-900">
-            <span class="material-icons text-blue-600">event_seat</span>
-            <span>Asientos Registrados</span>
-            <span class="text-sm font-normal text-gray-500 ml-2">
-              ({{ getAsientosFiltrados().length }} asientos)
-            </span>
-          </h2>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="material-icons text-blue-600">event_seat</span>
+              <h2 class="text-xl font-semibold text-gray-900">Asientos Registrados</h2>
+              <span class="text-sm font-normal text-gray-500">
+                ({{ asientosFiltrados.length }} de {{ asientos.length }} asientos)
+              </span>
+            </div>
+            <div class="text-sm text-gray-600">
+              Actualizado en tiempo real
+            </div>
+          </div>
         </div>
   
         <!-- Table -->
@@ -78,18 +172,18 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let asiento of getAsientosFiltrados()" 
+              <tr *ngFor="let asiento of asientosFiltrados" 
                   class="hover:bg-gray-50 transition-colors duration-150">
                 
                 <!-- ID -->
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm font-medium text-gray-900">#{{ asiento.id }}</span>
+                  <span class="text-sm font-medium text-gray-900">#{{ asiento.asiento_id }}</span>
                 </td>
                 
                 <!-- Sala -->
                 <td class="px-6 py-4">
-                  <div class="text-sm font-medium text-gray-900">{{ getNombreSala(asiento.salaId) }}</div>
-                  <div class="text-xs text-gray-500">Sala ID: {{ asiento.salaId }}</div>
+                  <div class="text-sm font-medium text-gray-900">{{ asiento.sala_nombre || 'Sala no encontrada' }}</div>
+                  <div class="text-xs text-gray-500">ID: {{ asiento.sala_id }}</div>
                 </td>
                 
                 <!-- Ubicación -->
@@ -106,15 +200,15 @@
                 
                 <!-- Tipo -->
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span [class]="`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getColorTipo(asiento.tipo)}`">
-                    {{ asiento.tipo | titlecase }}
+                  <span [class]="`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getColorTipo(asiento.tipo_asiento)}`">
+                    {{ asiento.tipo_asiento | titlecase }}
                   </span>
                 </td>
                 
                 <!-- Estado -->
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span [class]="`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getColorEstado(asiento.estado)}`">
-                    {{ asiento.estado | titlecase }}
+                  <span [class]="`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getColorEstado(asiento.estado_asiento)}`">
+                    {{ asiento.estado_asiento | titlecase }}
                   </span>
                 </td>
                 
@@ -149,7 +243,7 @@
   
                     <!-- Eliminar -->
                     <button 
-                      (click)="eliminarAsiento(asiento.id)"
+                      (click)="eliminarAsiento(asiento.asiento_id)"
                       class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
                       title="Eliminar">
                       <span class="material-icons text-sm">delete</span>
@@ -161,13 +255,21 @@
           </table>
   
           <!-- Empty State -->
-          <div *ngIf="getAsientosFiltrados().length === 0" 
+          <div *ngIf="asientosFiltrados.length === 0" 
                class="text-center py-12 px-6">
             <span class="material-icons text-gray-400 text-6xl mb-4">event_seat</span>
             <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron asientos</h3>
             <p class="text-gray-600 mb-6">
-              {{ salaSeleccionada ? 'No hay asientos en la sala seleccionada' : 'No hay asientos registrados' }}
+              {{ filtroSalaId || filtroEstado !== 'todos' || filtroTipo !== 'todos' || filtroBusqueda ? 
+                'No hay asientos que coincidan con los filtros aplicados' : 
+                'No hay asientos registrados en el sistema' }}
             </p>
+            <button 
+              (click)="limpiarFiltros()"
+              class="inline-flex items-center space-x-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 mr-4">
+              <span class="material-icons">refresh</span>
+              <span>Limpiar filtros</span>
+            </button>
             <button 
               (click)="abrirModal()"
               class="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200">
@@ -205,13 +307,15 @@
             <div class="space-y-6">
               <!-- Sala -->
               <div>
-                <label class="block text-sm font-semibold text-gray-900 mb-3">Sala</label>
+                <label class="block text-sm font-semibold text-gray-900 mb-3">
+                  Sala <span class="text-red-500">*</span>
+                </label>
                 <select 
-                  [(ngModel)]="nuevoAsiento.salaId"
+                  [(ngModel)]="nuevoAsiento.sala_id"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                   <option [value]="0">Seleccionar sala</option>
-                  <option *ngFor="let sala of salas" [value]="sala.id">
-                    {{ sala.nombre }} ({{ sala.tipo }}) - {{ sala.capacidadTotal }} asientos
+                  <option *ngFor="let sala of salas" [value]="sala.sala_id">
+                    {{ sala.nombre }} ({{ sala.tipo_sala || '2D' }}) - {{ sala.capacidad_total }} asientos
                   </option>
                 </select>
               </div>
@@ -219,7 +323,9 @@
               <!-- Fila y Número -->
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-semibold text-gray-900 mb-3">Fila</label>
+                  <label class="block text-sm font-semibold text-gray-900 mb-3">
+                    Fila <span class="text-red-500">*</span>
+                  </label>
                   <select 
                     [(ngModel)]="nuevoAsiento.fila"
                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
@@ -229,7 +335,9 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-semibold text-gray-900 mb-3">Número</label>
+                  <label class="block text-sm font-semibold text-gray-900 mb-3">
+                    Número <span class="text-red-500">*</span>
+                  </label>
                   <select 
                     [(ngModel)]="nuevoAsiento.numero"
                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
@@ -244,7 +352,7 @@
               <div>
                 <label class="block text-sm font-semibold text-gray-900 mb-3">Tipo de Asiento</label>
                 <select 
-                  [(ngModel)]="nuevoAsiento.tipo"
+                  [(ngModel)]="nuevoAsiento.tipo_asiento"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                   <option *ngFor="let tipo of tiposAsiento" [value]="tipo">
                     {{ tipo | titlecase }}
@@ -256,7 +364,7 @@
               <div>
                 <label class="block text-sm font-semibold text-gray-900 mb-3">Estado</label>
                 <select 
-                  [(ngModel)]="nuevoAsiento.estado"
+                  [(ngModel)]="nuevoAsiento.estado_asiento"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                   <option *ngFor="let estado of estadosAsiento" [value]="estado">
                     {{ estado | titlecase }}
@@ -277,17 +385,37 @@
             <button 
               type="button" 
               (click)="guardarAsiento()"
-              [disabled]="!validarAsiento()"
+              [disabled]="!validarAsiento() || guardando"
               [class]="`
-                px-6 py-3 font-semibold rounded-xl transition-all duration-200
-                ${validarAsiento() ? 
-                  'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl' : 
-                  'bg-gray-400 text-gray-200 cursor-not-allowed'}
+                px-6 py-3 font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2 min-w-24 justify-center
+                ${!validarAsiento() || guardando ? 
+                  'bg-gray-400 text-gray-200 cursor-not-allowed' : 
+                  'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'}
               `">
-              {{ asientoEditando ? 'Actualizar' : 'Guardar' }} Asiento
+              <span *ngIf="guardando" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+              <span>{{ guardando ? 'Guardando...' : (asientoEditando ? 'Actualizar' : 'Guardar') }}</span>
             </button>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
