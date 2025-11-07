@@ -22,6 +22,16 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./demo/dashboard/components/salas/salas').then((m) => m.Salas),
       },
+      {
+        path: 'asientos',
+        loadComponent: () =>
+          import('./demo/dashboard/components/asientos/asientos').then((m) => m.Asientos),
+      },
+      {
+        path: 'funciones',
+        loadComponent: () =>
+          import('./demo/dashboard/components/funciones/funciones').then((m) => m.Funciones),
+      },
     ],
   },
 ];
