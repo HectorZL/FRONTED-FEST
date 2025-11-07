@@ -125,6 +125,33 @@ export class PeliculasService {
   }
 
   /**
+   * Elimina una película por su ID
+   * @param id ID de la película a eliminar
+   * @returns Observable con el resultado de la operación
+   */
+  eliminarPelicula(id: number): Observable<{ success: boolean; error?: string }> {
+    return from(
+      supabase
+        .from(this.TABLE_NAME)
+        .delete()
+        .eq('pelicula_id', id)
+    ).pipe(
+      map((response: any) => {
+        if (response.error) {
+          console.error('Error al eliminar película:', response.error);
+          return { success: false, error: response.error.message };
+        }
+        
+        // Actualizar la lista local
+        this.currentPeliculas = this.currentPeliculas.filter(p => p.id !== id);
+        this.peliculasSubject.next([...this.currentPeliculas]);
+        
+        return { success: true };
+      })
+    );
+  }
+
+  /**
    * Método principal para que los componentes se suscriban.
    */
   getListaPeliculas(): Observable<Pelicula[]> {

@@ -116,23 +116,40 @@ export class Peliculas implements OnInit, OnDestroy {
   }
 
   eliminarPelicula(id: number) {
-    // TODO: Implement delete in the service
     if (confirm('¿Estás seguro de eliminar esta película?')) {
-      this.peliculas = this.peliculas.filter(p => p.id !== id);
+      this.peliculasService.eliminarPelicula(id).subscribe({
+        next: (result) => {
+          if (result.success) {
+            // La eliminación se maneja automáticamente por la suscripción a peliculas$
+            console.log('Película eliminada exitosamente');
+          } else {
+            alert(`Error al eliminar la película: ${result.error}`);
+          }
+        },
+        error: (error) => {
+          console.error('Error al eliminar la película:', error);
+          alert('Ocurrió un error al intentar eliminar la película');
+        }
+      });
     }
   }
 
   get peliculasFiltradas() {
-    if (!this.filtroBusqueda) {
+    if (!this.filtroBusqueda || this.filtroBusqueda.trim() === '') {
       return this.peliculas;
     }
-    const busqueda = this.filtroBusqueda.toLowerCase();
-    return this.peliculas.filter(pelicula =>
-      pelicula.titulo.toLowerCase().includes(busqueda) ||
-      pelicula.genero.some(g => g.toLowerCase().includes(busqueda)) ||
-      pelicula.clasificacion.toLowerCase().includes(busqueda) ||
-      pelicula.sinopsis.toLowerCase().includes(busqueda)
-    );
+    
+    const busqueda = this.filtroBusqueda.trim().toLowerCase();
+    return this.peliculas.filter(pelicula => {
+      // Verificar si alguna propiedad de la película coincide con la búsqueda
+      return (
+        (pelicula.titulo && pelicula.titulo.toLowerCase().includes(busqueda)) ||
+        (pelicula.sinopsis && pelicula.sinopsis.toLowerCase().includes(busqueda)) ||
+        (pelicula.clasificacion && pelicula.clasificacion.toLowerCase().includes(busqueda)) ||
+        (pelicula.genero && Array.isArray(pelicula.genero) && 
+         pelicula.genero.some(g => g && g.toLowerCase().includes(busqueda)))
+      );
+    });
   }
 
   formatearDuracion(minutos: number): string {
