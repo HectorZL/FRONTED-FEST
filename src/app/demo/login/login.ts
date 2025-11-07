@@ -29,14 +29,19 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // Si ya está autenticado, redirigir al dashboard
+    if (this.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
 
   onSubmit(): void {
     if (this.loginForm.valid) {
       this.isLoading.set(true);
       this.errorMessage.set('');
 
-      const { email, password } = this.loginForm.value;
+      const { email, password, rememberMe } = this.loginForm.value;
 
       // Usar el método existente getUsuariosCompletos()
       this.usuarioService.getUsuariosCompletos().subscribe({
@@ -51,9 +56,8 @@ export class LoginComponent implements OnInit {
           if (usuarioEncontrado) {
             // Verificar si es administrador
             if (usuarioEncontrado.rol?.nombre?.toLowerCase() === 'administrador') {
-              // Guardar sesión
-              localStorage.setItem('currentUser', JSON.stringify(usuarioEncontrado));
-              localStorage.setItem('isAuthenticated', 'true');
+              // Guardar sesión de forma persistente
+              this.guardarSesion(usuarioEncontrado, rememberMe);
               
               // Redirigir al dashboard
               this.router.navigate(['/dashboard']);
@@ -73,6 +77,23 @@ export class LoginComponent implements OnInit {
     } else {
       this.markFormGroupTouched();
     }
+  }
+
+  private guardarSesion(usuario: any, rememberMe: boolean): void {
+    // Guardar usuario en localStorage (persistente)
+    localStorage.setItem('currentUser', JSON.stringify(usuario));
+    localStorage.setItem('isAuthenticated', 'true');
+    
+    // Si el usuario marcó "Recordarme", guardar por más tiempo
+    if (rememberMe) {
+      localStorage.setItem('rememberMe', 'true');
+    } else {
+      localStorage.removeItem('rememberMe');
+    }
+  }
+
+  private isAuthenticated(): boolean {
+    return localStorage.getItem('isAuthenticated') === 'true';
   }
 
   togglePasswordVisibility(): void {

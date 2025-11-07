@@ -1,22 +1,23 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { PeliculasService,Pelicula } from '../services/peliculas.service';
-import { Subscription } from 'rxjs'; // Necesario para gestionar la desuscripción
+import { PeliculasService, Pelicula } from '../services/peliculas.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true, // Asumimos que es un Standalone Component
+  standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit, OnDestroy {
-  // Inyección de dependencias usando la función inject (Angular 14+)
   private peliculasService = inject(PeliculasService);
+  private router = inject(Router);
   private peliculasSubscription!: Subscription;
 
   isCollapsed = false;
+  currentUser: any = null; // ✅ AGREGAR ESTA PROPIEDAD
 
   menuItems = [
     {
@@ -67,28 +68,16 @@ export class Dashboard implements OnInit, OnDestroy {
       label: 'Boletos',
       description: 'Gestionar venta de boletos',
     },
-    {
-    },
-    {
-      path: '/dashboard/roles',
-      icon: '🔐',
-      label: 'Roles',
-      description: 'Gestionar permisos y roles',
-    },
   ];
 
-  // ===================================
-  // LÓGICA DE SERVICIO
-  // ===================================
-
   ngOnInit() {
+    // ✅ AGREGAR: Cargar usuario del localStorage
+    this.loadCurrentUser();
+    
     console.log('--- Iniciando la carga de datos de películas ---');
     
-    // 1. Suscribirse a la lista de películas
     this.peliculasSubscription = this.peliculasService.getListaPeliculas().subscribe(
       (peliculas: Pelicula[]) => {
-        // 2. Muestra la lista por consola. 
-        // ¡Esta línea se ejecutará cada vez que haya un cambio en Supabase!
         console.log('✅ Lista de Películas (Tiempo Real) recibida:', peliculas);
       },
       (error) => {
@@ -97,8 +86,48 @@ export class Dashboard implements OnInit, OnDestroy {
     );
   }
 
+  // ✅ AGREGAR ESTE MÉTODO
+  private loadCurrentUser(): void {
+    const userStr = localStorage.getItem('currentUser');
+    if (userStr) {
+      this.currentUser = JSON.parse(userStr);
+      console.log('Usuario cargado del localStorage:', this.currentUser);
+    } else {
+      console.error('No se encontró usuario en localStorage');
+      // Si no hay usuario, redirigir al login
+      this.router.navigate(['/login']);
+    }
+  }
+
+  // ✅ AGREGAR ESTE MÉTODO
+  logout(): void {
+    // Limpiar localStorage
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('rememberMe');
+    
+    // Redirigir al login
+    this.router.navigate(['/login']);
+  }
+
+  // ✅ AGREGAR ESTE MÉTODO
+  getUserInitials(): string {
+    if (!this.currentUser) return 'A';
+    const nombres = this.currentUser.nombres || '';
+    const apellidos = this.currentUser.apellidos || '';
+    
+    if (nombres && apellidos) {
+      return (nombres.charAt(0) + apellidos.charAt(0)).toUpperCase();
+    } else if (nombres) {
+      return nombres.charAt(0).toUpperCase();
+    } else if (this.currentUser.email) {
+      return this.currentUser.email.charAt(0).toUpperCase();
+    }
+    
+    return 'A';
+  }
+
   ngOnDestroy() {
-    // Desuscribe para evitar fugas de memoria (memory leaks)
     if (this.peliculasSubscription) {
       this.peliculasSubscription.unsubscribe();
     }
